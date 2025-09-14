@@ -1,5 +1,5 @@
 --// Key hệ thống
-local CorrectKey = "090812" -- 🔑 Đổi key ở đây
+local CorrectKey = "abc" -- 🔑 Đổi key ở đây
 
 --// Tạo GUI chính
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
@@ -35,7 +35,7 @@ SubmitBtn.TextColor3 = Color3.fromRGB(255,255,255)
 
 --// Khung menu (ẩn trước)
 local MainGui = Instance.new("Frame", ScreenGui)
-MainGui.Size = UDim2.new(0, 200, 0, 150)
+MainGui.Size = UDim2.new(0, 200, 0, 230) -- tăng chiều cao
 MainGui.Position = UDim2.new(0.3, 0, 0.3, 0)
 MainGui.BackgroundColor3 = Color3.fromRGB(30,30,30)
 MainGui.Visible = false
@@ -53,7 +53,6 @@ local Btn1 = Instance.new("TextButton", MainGui)
 Btn1.Size = UDim2.new(0, 180, 0, 30)
 Btn1.Position = UDim2.new(0, 10, 0, 10)
 Btn1.Text = "FlyGuiV3"
-
 Btn1.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
 end)
@@ -63,7 +62,6 @@ local Btn2 = Instance.new("TextButton", MainGui)
 Btn2.Size = UDim2.new(0, 180, 0, 30)
 Btn2.Position = UDim2.new(0, 10, 0, 50)
 Btn2.Text = "Infinite Jump"
-
 Btn2.MouseButton1Click:Connect(function()
     local UIS = game:GetService("UserInputService")
     local plr = game.Players.LocalPlayer
@@ -79,7 +77,6 @@ local Btn3 = Instance.new("TextButton", MainGui)
 Btn3.Size = UDim2.new(0, 180, 0, 30)
 Btn3.Position = UDim2.new(0, 10, 0, 90)
 Btn3.Text = "Speed Hack"
-
 Btn3.MouseButton1Click:Connect(function()
     local plr = game.Players.LocalPlayer
     local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
@@ -91,6 +88,85 @@ Btn3.MouseButton1Click:Connect(function()
             hum.WalkSpeed = 16
             Btn3.Text = "Speed: OFF"
         end
+    end
+end)
+
+--// Nút 4: NoClip
+local Btn4 = Instance.new("TextButton", MainGui)
+Btn4.Size = UDim2.new(0, 180, 0, 30)
+Btn4.Position = UDim2.new(0, 10, 0, 130)
+Btn4.Text = "NoClip"
+local noclip = false
+local RunService = game:GetService("RunService")
+Btn4.MouseButton1Click:Connect(function()
+    noclip = not noclip
+    if noclip then
+        Btn4.Text = "NoClip: ON"
+    else
+        Btn4.Text = "NoClip: OFF"
+    end
+end)
+RunService.Stepped:Connect(function()
+    if noclip then
+        local plr = game.Players.LocalPlayer
+        if plr.Character then
+            for _, v in pairs(plr.Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide then
+                    v.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+--// Nút 5: ESP
+local Btn5 = Instance.new("TextButton", MainGui)
+Btn5.Size = UDim2.new(0, 180, 0, 30)
+Btn5.Position = UDim2.new(0, 10, 0, 170)
+Btn5.Text = "ESP"
+local espEnabled = false
+local espObjects = {}
+
+local function addESP(player)
+    if player.Character and player.Character:FindFirstChild("Head") then
+        local Billboard = Instance.new("BillboardGui", player.Character.Head)
+        Billboard.Name = "ESP"
+        Billboard.Size = UDim2.new(0,200,0,50)
+        Billboard.AlwaysOnTop = true
+
+        local NameTag = Instance.new("TextLabel", Billboard)
+        NameTag.Size = UDim2.new(1,0,1,0)
+        NameTag.Text = player.Name
+        NameTag.TextColor3 = Color3.fromRGB(255,0,0)
+        NameTag.BackgroundTransparency = 1
+
+        table.insert(espObjects, Billboard)
+    end
+end
+
+Btn5.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    if espEnabled then
+        Btn5.Text = "ESP: ON"
+        for _,plr in pairs(game.Players:GetPlayers()) do
+            if plr ~= game.Players.LocalPlayer then
+                addESP(plr)
+            end
+        end
+        game.Players.PlayerAdded:Connect(function(plr)
+            plr.CharacterAdded:Connect(function()
+                task.wait(1)
+                if espEnabled then
+                    addESP(plr)
+                end
+            end)
+        end)
+    else
+        Btn5.Text = "ESP: OFF"
+        for _,v in pairs(espObjects) do
+            if v and v.Parent then v:Destroy() end
+        end
+        espObjects = {}
     end
 end)
 
