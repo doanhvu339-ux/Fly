@@ -224,7 +224,7 @@ end)
 ------------------------------------------------
 -- Nhập key logic
 ------------------------------------------------
-local CorrectKey = "abc"
+local CorrectKey = "abcd"
 
 OpenKeyBtn.MouseButton1Click:Connect(function()
     KeyFrame.Visible = not KeyFrame.Visible
