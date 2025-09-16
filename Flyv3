@@ -25,7 +25,7 @@ SubmitBtn.Size = UDim2.new(0, 180, 0, 30)
 SubmitBtn.Position = UDim2.new(0, 20, 0, 60)
 SubmitBtn.Text = "Xác nhận"
 
---// Menu chính (ẩn khi chưa nhập key)
+--// Menu chính
 local MainGui = Instance.new("Frame", ScreenGui)
 MainGui.Size = UDim2.new(0, 260, 0, 300)
 MainGui.Position = UDim2.new(0.3, 0, 0.3, 0)
@@ -44,7 +44,7 @@ ToggleButton.Visible = false
 ------------------------------------------------
 -- Logic nhập key
 ------------------------------------------------
-local CorrectKey = "abc" -- mật khẩu bạn muốn
+local CorrectKey = "abc"
 
 OpenKeyBtn.MouseButton1Click:Connect(function()
     KeyFrame.Visible = not KeyFrame.Visible
@@ -223,10 +223,15 @@ BBtn1.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI"))()
 end)
 
--- Teleport chọn người chơi
+-- Nút Teleport ngay dưới
+local TpBtn = Instance.new("TextButton", Tab2)
+TpBtn.Size = UDim2.new(0, 200, 0, 30)
+TpBtn.Position = UDim2.new(0, 10, 0, 50)
+TpBtn.Text = "Chọn người chơi"
+
 local PlayerListFrame = Instance.new("Frame", Tab2)
 PlayerListFrame.Size = UDim2.new(0, 200, 0, 200)
-PlayerListFrame.Position = UDim2.new(0, 10, 0, 50)
+PlayerListFrame.Position = UDim2.new(0, 10, 0, 90)
 PlayerListFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
 PlayerListFrame.Visible = false
 
@@ -235,11 +240,6 @@ Scroll.Size = UDim2.new(1, 0, 1, 0)
 Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 Scroll.ScrollBarThickness = 6
 
-local TpBtn = Instance.new("TextButton", Tab2)
-TpBtn.Size = UDim2.new(0, 200, 0, 30)
-TpBtn.Position = UDim2.new(0, 10, 0, 260)
-TpBtn.Text = "Chọn người chơi"
-
 local function AddPlayerButton(plr)
     local Btn = Instance.new("TextButton", Scroll)
     Btn.Size = UDim2.new(1, -10, 0, 30)
@@ -247,8 +247,9 @@ local function AddPlayerButton(plr)
     Btn.Text = plr.Name
     Btn.MouseButton1Click:Connect(function()
         local localPlr = game.Players.LocalPlayer
-        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and localPlr.Character and localPlr.Character:FindFirstChild("HumanoidRootPart") then
-            localPlr.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") 
+        and localPlr.Character and localPlr.Character:FindFirstChild("HumanoidRootPart") then
+            localPlr.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,10,0) -- Tp cao hơn 10
         end
     end)
     Scroll.CanvasSize = UDim2.new(0,0,0,(#Scroll:GetChildren()-1) * 35)
