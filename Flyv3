@@ -3,7 +3,7 @@ local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 
 --// Nút mở bảng nhập key
 local OpenKeyBtn = Instance.new("TextButton", ScreenGui)
-OpenKeyBtn.Size = UDim2.new(0, 120, 0, 30)
+OpenKeyBtn.Size = UDim2.new(0, 80, 0, 30)
 OpenKeyBtn.Position = UDim2.new(0.4, 0, 0.3, 0)
 OpenKeyBtn.Text = "Mở bảng nhập key"
 
@@ -25,26 +25,150 @@ SubmitBtn.Size = UDim2.new(0, 180, 0, 30)
 SubmitBtn.Position = UDim2.new(0, 20, 0, 60)
 SubmitBtn.Text = "Xác nhận"
 
---// Menu chính (ẩn khi chưa nhập key)
+------------------------------------------------
+-- Menu chính (ẩn khi chưa nhập key)
+------------------------------------------------
 local MainGui = Instance.new("Frame", ScreenGui)
-MainGui.Size = UDim2.new(0, 220, 0, 260)
+MainGui.Size = UDim2.new(0, 220, 0, 300)
 MainGui.Position = UDim2.new(0.3, 0, 0.3, 0)
 MainGui.BackgroundColor3 = Color3.fromRGB(30,30,30)
 MainGui.Active = true
 MainGui.Draggable = true
 MainGui.Visible = false
 
---// Nút đóng/mở menu
+-- Nút đóng/mở menu
 local ToggleButton = Instance.new("TextButton", ScreenGui)
 ToggleButton.Size = UDim2.new(0, 80, 0, 30)
 ToggleButton.Position = UDim2.new(0, 0, 0, 0)
 ToggleButton.Text = "Đóng/Mở"
 ToggleButton.Visible = false
 
+-- Tab buttons
+local Tab1Btn = Instance.new("TextButton", MainGui)
+Tab1Btn.Size = UDim2.new(0, 100, 0, 30)
+Tab1Btn.Position = UDim2.new(0, 0, 0, 0)
+Tab1Btn.Text = "Menu Chính"
+
+local Tab2Btn = Instance.new("TextButton", MainGui)
+Tab2Btn.Size = UDim2.new(0, 100, 0, 30)
+Tab2Btn.Position = UDim2.new(0, 100, 0, 0)
+Tab2Btn.Text = "Script Blox Fruits"
+
+-- Frames cho tab
+local Tab1 = Instance.new("Frame", MainGui)
+Tab1.Size = UDim2.new(1,0,1,-30)
+Tab1.Position = UDim2.new(0,0,0,30)
+Tab1.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+local Tab2 = Instance.new("Frame", MainGui)
+Tab2.Size = UDim2.new(1,0,1,-30)
+Tab2.Position = UDim2.new(0,0,0,30)
+Tab2.BackgroundColor3 = Color3.fromRGB(40,40,40)
+Tab2.Visible = false
+
+Tab1Btn.MouseButton1Click:Connect(function()
+    Tab1.Visible = true
+    Tab2.Visible = false
+end)
+Tab2Btn.MouseButton1Click:Connect(function()
+    Tab1.Visible = false
+    Tab2.Visible = true
+end)
+
 ------------------------------------------------
--- Logic nhập key
+-- TAB 1 (Menu chính)
 ------------------------------------------------
-local CorrectKey = "12345" -- mật khẩu bạn muốn
+local Btn1 = Instance.new("TextButton", Tab1)
+Btn1.Size = UDim2.new(0, 180, 0, 30)
+Btn1.Position = UDim2.new(0, 10, 0, 10)
+Btn1.Text = "FlyGuiV3"
+Btn1.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+end)
+
+local Btn2 = Instance.new("TextButton", Tab1)
+Btn2.Size = UDim2.new(0, 180, 0, 30)
+Btn2.Position = UDim2.new(0, 10, 0, 50)
+Btn2.Text = "Infinite Jump"
+Btn2.MouseButton1Click:Connect(function()
+    local UIS = game:GetService("UserInputService")
+    local plr = game.Players.LocalPlayer
+    UIS.JumpRequest:Connect(function()
+        if plr.Character then
+            plr.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+        end
+    end)
+end)
+
+local Btn3 = Instance.new("TextButton", Tab1)
+Btn3.Size = UDim2.new(0, 180, 0, 30)
+Btn3.Position = UDim2.new(0, 10, 0, 90)
+Btn3.Text = "Speed Hack"
+Btn3.MouseButton1Click:Connect(function()
+    local plr = game.Players.LocalPlayer
+    local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed = hum.WalkSpeed == 16 and 60 or 16
+    end
+end)
+
+local Btn4 = Instance.new("TextButton", Tab1)
+Btn4.Size = UDim2.new(0, 180, 0, 30)
+Btn4.Position = UDim2.new(0, 10, 0, 130)
+Btn4.Text = "NoClip"
+local noclip = false
+game:GetService("RunService").Stepped:Connect(function()
+    if noclip then
+        local plr = game.Players.LocalPlayer
+        if plr.Character then
+            for _, v in pairs(plr.Character:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = false end
+            end
+        end
+    end
+end)
+Btn4.MouseButton1Click:Connect(function()
+    noclip = not noclip
+    Btn4.Text = noclip and "NoClip: ON" or "NoClip: OFF"
+end)
+
+------------------------------------------------
+-- TAB 2 (Blox Fruits)
+------------------------------------------------
+local BBtn1 = Instance.new("TextButton", Tab2)
+BBtn1.Size = UDim2.new(0, 180, 0, 30)
+BBtn1.Position = UDim2.new(0, 10, 0, 10)
+BBtn1.Text = "Blox Fruits Script"
+BBtn1.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/acsu123/BloxFruit/main/HohoHub.lua"))()
+end)
+
+local TpBox = Instance.new("TextBox", Tab2)
+TpBox.Size = UDim2.new(0, 180, 0, 30)
+TpBox.Position = UDim2.new(0, 10, 0, 50)
+TpBox.PlaceholderText = "Nhập tên người chơi"
+TpBox.Text = ""
+
+local TpBtn = Instance.new("TextButton", Tab2)
+TpBtn.Size = UDim2.new(0, 180, 0, 30)
+TpBtn.Position = UDim2.new(0, 10, 0, 90)
+TpBtn.Text = "Teleport"
+TpBtn.MouseButton1Click:Connect(function()
+    local target = game.Players:FindFirstChild(TpBox.Text)
+    local localPlr = game.Players.LocalPlayer
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        localPlr.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+    else
+        TpBtn.Text = "Không tìm thấy!"
+        task.wait(1.5)
+        TpBtn.Text = "Teleport"
+    end
+end)
+
+------------------------------------------------
+-- Nhập key logic
+------------------------------------------------
+local CorrectKey = "12345" -- đổi mật khẩu tại đây
 
 OpenKeyBtn.MouseButton1Click:Connect(function()
     KeyFrame.Visible = not KeyFrame.Visible
@@ -52,11 +176,10 @@ end)
 
 SubmitBtn.MouseButton1Click:Connect(function()
     if KeyBox.Text == CorrectKey then
-        -- Mở menu chính
         MainGui.Visible = true
         ToggleButton.Visible = true
         KeyFrame.Visible = false
-        OpenKeyBtn:Destroy() -- Xóa nút mở bảng key
+        OpenKeyBtn:Destroy()
     else
         SubmitBtn.Text = "Sai mật khẩu!"
         task.wait(1.5)
