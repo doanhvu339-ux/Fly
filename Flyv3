@@ -3,7 +3,7 @@ local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 
 --// Nút mở bảng nhập key
 local OpenKeyBtn = Instance.new("TextButton", ScreenGui)
-OpenKeyBtn.Size = UDim2.new(0, 80, 0, 30)
+OpenKeyBtn.Size = UDim2.new(0, 120, 0, 30)
 OpenKeyBtn.Position = UDim2.new(0.4, 0, 0.3, 0)
 OpenKeyBtn.Text = "Mở bảng nhập key"
 
@@ -78,6 +78,7 @@ end)
 ------------------------------------------------
 -- TAB 1 (Menu chính)
 ------------------------------------------------
+-- Fly GUI
 local Btn1 = Instance.new("TextButton", Tab1)
 Btn1.Size = UDim2.new(0, 180, 0, 30)
 Btn1.Position = UDim2.new(0, 10, 0, 10)
@@ -86,36 +87,51 @@ Btn1.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
 end)
 
+-- Infinite Jump
 local Btn2 = Instance.new("TextButton", Tab1)
 Btn2.Size = UDim2.new(0, 180, 0, 30)
 Btn2.Position = UDim2.new(0, 10, 0, 50)
-Btn2.Text = "Infinite Jump"
+Btn2.Text = "Infinite Jump: OFF"
+local jumpOn = false
 Btn2.MouseButton1Click:Connect(function()
-    local UIS = game:GetService("UserInputService")
-    local plr = game.Players.LocalPlayer
-    UIS.JumpRequest:Connect(function()
+    jumpOn = not jumpOn
+    Btn2.Text = jumpOn and "Infinite Jump: ON" or "Infinite Jump: OFF"
+end)
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if jumpOn then
+        local plr = game.Players.LocalPlayer
         if plr.Character then
             plr.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
         end
-    end)
+    end
 end)
 
+-- Speed Hack
 local Btn3 = Instance.new("TextButton", Tab1)
 Btn3.Size = UDim2.new(0, 180, 0, 30)
 Btn3.Position = UDim2.new(0, 10, 0, 90)
-Btn3.Text = "Speed Hack"
+Btn3.Text = "Speed Hack: OFF"
+local speedOn = false
 Btn3.MouseButton1Click:Connect(function()
     local plr = game.Players.LocalPlayer
     local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
     if hum then
-        hum.WalkSpeed = hum.WalkSpeed == 16 and 60 or 16
+        speedOn = not speedOn
+        if speedOn then
+            hum.WalkSpeed = 60
+            Btn3.Text = "Speed Hack: ON"
+        else
+            hum.WalkSpeed = 16
+            Btn3.Text = "Speed Hack: OFF"
+        end
     end
 end)
 
+-- NoClip
 local Btn4 = Instance.new("TextButton", Tab1)
 Btn4.Size = UDim2.new(0, 180, 0, 30)
 Btn4.Position = UDim2.new(0, 10, 0, 130)
-Btn4.Text = "NoClip"
+Btn4.Text = "NoClip: OFF"
 local noclip = false
 game:GetService("RunService").Stepped:Connect(function()
     if noclip then
@@ -130,6 +146,46 @@ end)
 Btn4.MouseButton1Click:Connect(function()
     noclip = not noclip
     Btn4.Text = noclip and "NoClip: ON" or "NoClip: OFF"
+end)
+
+-- ESP Toggle
+local Btn5 = Instance.new("TextButton", Tab1)
+Btn5.Size = UDim2.new(0, 180, 0, 30)
+Btn5.Position = UDim2.new(0, 10, 0, 170)
+Btn5.Text = "ESP: OFF"
+local espOn = false
+local function createESP(player)
+    if player.Character and not player.Character:FindFirstChild("ESPBox") then
+        local box = Instance.new("BoxHandleAdornment")
+        box.Name = "ESPBox"
+        box.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
+        box.Size = Vector3.new(4,6,1)
+        box.Color3 = Color3.fromRGB(255,0,0)
+        box.AlwaysOnTop = true
+        box.ZIndex = 5
+        box.Transparency = 0.5
+        box.Parent = player.Character
+    end
+end
+Btn5.MouseButton1Click:Connect(function()
+    espOn = not espOn
+    Btn5.Text = espOn and "ESP: ON" or "ESP: OFF"
+    if espOn then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer then
+                createESP(p)
+            end
+        end
+        game.Players.PlayerAdded:Connect(function(p)
+            if espOn then createESP(p) end
+        end)
+    else
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("ESPBox") then
+                p.Character.ESPBox:Destroy()
+            end
+        end
+    end
 end)
 
 ------------------------------------------------
@@ -168,7 +224,7 @@ end)
 ------------------------------------------------
 -- Nhập key logic
 ------------------------------------------------
-local CorrectKey = "12345" -- đổi mật khẩu tại đây
+local CorrectKey = "abc"
 
 OpenKeyBtn.MouseButton1Click:Connect(function()
     KeyFrame.Visible = not KeyFrame.Visible
