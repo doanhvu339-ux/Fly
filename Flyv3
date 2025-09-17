@@ -1,5 +1,28 @@
 --// Khởi tạo GUI chính
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+
+-- KEY SYSTEM
+local Key1 = "abc"
+local Key2 = "abcd"
+local CurrentKey = Key1  -- mặc định luôn bắt đầu = abc
+
+local KeyFrame = Instance.new("Frame", ScreenGui)
+KeyFrame.Size = UDim2.new(0, 250, 0, 150)
+KeyFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+
+local KeyBox = Instance.new("TextBox", KeyFrame)
+KeyBox.Size = UDim2.new(0, 200, 0, 40)
+KeyBox.Position = UDim2.new(0.5, -100, 0.3, 0)
+KeyBox.PlaceholderText = "Nhập Key..."
+KeyBox.Text = ""
+
+local Submit = Instance.new("TextButton", KeyFrame)
+Submit.Size = UDim2.new(0, 200, 0, 40)
+Submit.Position = UDim2.new(0.5, -100, 0.65, 0)
+Submit.Text = "Xác Nhận"
+
+-- GUI chính (ẩn trước)
 local MainGui = Instance.new("Frame")
 MainGui.Size = UDim2.new(0, 350, 0, 400)
 MainGui.Position = UDim2.new(0.5, -175, 0.5, -200)
@@ -49,7 +72,7 @@ Tab2Btn.MouseButton1Click:Connect(function()
     Tab2.Visible = true
 end)
 
--- ========== TAB 1 NÚT SCRIPT ==========
+-- Hàm tạo nút
 local function createButton(parent, text, pos, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(0,200,0,30)
@@ -58,6 +81,7 @@ local function createButton(parent, text, pos, callback)
     btn.MouseButton1Click:Connect(callback)
 end
 
+-- ========== TAB 1 ==========
 createButton(Tab1,"FlyGui",50,function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
 end)
@@ -87,21 +111,22 @@ createButton(Tab1,"Noclip",170,function()
 end)
 
 createButton(Tab1,"ESP Toggle",210,function()
-    -- ESP Toggle
     local enabled = not _G.ESP
     _G.ESP = enabled
     if enabled then
         for _,plr in pairs(game.Players:GetPlayers()) do
             if plr ~= game.Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
-                local billboard = Instance.new("BillboardGui", plr.Character.Head)
-                billboard.Name = "ESP"
-                billboard.Size = UDim2.new(0,200,0,50)
-                billboard.AlwaysOnTop = true
-                local label = Instance.new("TextLabel", billboard)
-                label.Size = UDim2.new(1,0,1,0)
-                label.Text = plr.Name
-                label.TextColor3 = Color3.new(1,0,0)
-                label.BackgroundTransparency = 1
+                if not plr.Character.Head:FindFirstChild("ESP") then
+                    local billboard = Instance.new("BillboardGui", plr.Character.Head)
+                    billboard.Name = "ESP"
+                    billboard.Size = UDim2.new(0,200,0,50)
+                    billboard.AlwaysOnTop = true
+                    local label = Instance.new("TextLabel", billboard)
+                    label.Size = UDim2.new(1,0,1,0)
+                    label.Text = plr.Name
+                    label.TextColor3 = Color3.new(1,0,0)
+                    label.BackgroundTransparency = 1
+                end
             end
         end
     else
@@ -113,105 +138,66 @@ createButton(Tab1,"ESP Toggle",210,function()
     end
 end)
 
--- ========== TAB 2 SCRIPT ==========
-createButton(Tab2,"Script Brainrot",50,function()
-    -- script ví dụ
-    print("Brainrot script chạy!")
-end)
+-- ========== TAB 2 ==========
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
-createButton(Tab2,"Script Blox Fruit",90,function()
-    -- script ví dụ
-    print("Blox Fruit script chạy!")
-end)
+-- Dropdown Frame
+local DropFrame = Instance.new("Frame", Tab2)
+DropFrame.Size = UDim2.new(0,200,0,150)
+DropFrame.Position = UDim2.new(0,75,0,50)
+DropFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
 
-createButton(Tab2,"TP đến người chơi",130,function()
-    local players = game.Players:GetPlayers()
-    for _,plr in pairs(players) do
-        if plr ~= game.Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0)
-            break
+local Title = Instance.new("TextLabel", DropFrame)
+Title.Size = UDim2.new(1,0,0,30)
+Title.Text = "Chọn người chơi"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundTransparency = 1
+
+local PlayerList = Instance.new("ScrollingFrame", DropFrame)
+PlayerList.Size = UDim2.new(1,0,1,-30)
+PlayerList.Position = UDim2.new(0,0,0,30)
+PlayerList.CanvasSize = UDim2.new(0,0,0,0)
+PlayerList.ScrollBarThickness = 6
+
+local function refreshList()
+    PlayerList:ClearAllChildren()
+    local y = 0
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local btn = Instance.new("TextButton", PlayerList)
+            btn.Size = UDim2.new(1,0,0,25)
+            btn.Position = UDim2.new(0,0,0,y)
+            btn.Text = plr.Name
+            btn.MouseButton1Click:Connect(function()
+                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame =
+                        plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0)
+                end
+            end)
+            y = y + 25
         end
     end
-end)
-
--- ========== HỆ THỐNG KEY ==========
-local KeyFrame = Instance.new("Frame", ScreenGui)
-KeyFrame.Size = UDim2.new(0,250,0,120)
-KeyFrame.Position = UDim2.new(0.5,-125,0.5,-60)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
-
-local KeyBox = Instance.new("TextBox", KeyFrame)
-KeyBox.Size = UDim2.new(0,200,0,30)
-KeyBox.Position = UDim2.new(0,25,0,20)
-KeyBox.PlaceholderText = "Nhập key..."
-
-local SubmitBtn = Instance.new("TextButton", KeyFrame)
-SubmitBtn.Size = UDim2.new(0,200,0,30)
-SubmitBtn.Position = UDim2.new(0,25,0,60)
-SubmitBtn.Text = "Xác nhận"
-
-local OpenKeyBtn = Instance.new("TextButton", ScreenGui)
-OpenKeyBtn.Size = UDim2.new(0,100,0,30)
-OpenKeyBtn.Position = UDim2.new(0,120,0,10)
-OpenKeyBtn.Text = "Mở bảng key"
-
-OpenKeyBtn.MouseButton1Click:Connect(function()
-    KeyFrame.Visible = true
-end)
-
--- Key logic
-local Key1, Key2, Key3 = "abc","abcd","baconpr"
-local CurrentKey = Key1
-local SaveFile = "saved_key.txt"
-
--- Auto mở nếu có key đã lưu
-if isfile and readfile and isfile(SaveFile) then
-    local saved = readfile(SaveFile)
-    if saved == Key1 or saved == Key2 or saved == Key3 then
-        MainGui.Visible = true
-        ToggleButton.Visible = true
-        OpenKeyBtn:Destroy()
-        KeyFrame.Visible = false
-    end
+    PlayerList.CanvasSize = UDim2.new(0,0,0,y)
 end
 
-SubmitBtn.MouseButton1Click:Connect(function()
-    if KeyBox.Text == CurrentKey or KeyBox.Text == Key3 then
-        MainGui.Visible = true
-        ToggleButton.Visible = true
+Players.PlayerAdded:Connect(refreshList)
+Players.PlayerRemoving:Connect(refreshList)
+refreshList()
+
+-- XỬ LÝ NHẬP KEY
+Submit.MouseButton1Click:Connect(function()
+    if KeyBox.Text == CurrentKey then
         KeyFrame.Visible = false
-        OpenKeyBtn:Destroy()
-
-        if writefile then
-            pcall(function() writefile(SaveFile, KeyBox.Text) end)
-        end
-
-        if KeyBox.Text == Key1 then
+        ToggleButton.Visible = true
+        -- đổi key cho lần sau
+        if CurrentKey == Key1 then
             CurrentKey = Key2
-        elseif KeyBox.Text == Key2 then
+        else
             CurrentKey = Key1
         end
     else
-        SubmitBtn.Text = "Sai mật khẩu!"
-        task.wait(1.5)
-        SubmitBtn.Text = "Xác nhận"
-    end
-end)
-
--- Nút Xóa Key
-local ClearKeyBtn = Instance.new("TextButton", MainGui)
-ClearKeyBtn.Size = UDim2.new(0,150,0,30)
-ClearKeyBtn.Position = UDim2.new(0,10,0,350)
-ClearKeyBtn.Text = "🗑️ Xóa Key đã lưu"
-ClearKeyBtn.MouseButton1Click:Connect(function()
-    if isfile and delfile and isfile(SaveFile) then
-        delfile(SaveFile)
-        ClearKeyBtn.Text = "✅ Đã xóa key!"
-        task.wait(1.5)
-        ClearKeyBtn.Text = "🗑️ Xóa Key đã lưu"
-    else
-        ClearKeyBtn.Text = "⚠️ Không tìm thấy file!"
-        task.wait(1.5)
-        ClearKeyBtn.Text = "🗑️ Xóa Key đã lưu"
+        KeyBox.Text = ""
+        KeyBox.PlaceholderText = "Sai Key!"
     end
 end)
