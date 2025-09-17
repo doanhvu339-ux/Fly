@@ -4,7 +4,8 @@ local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 -- KEY SYSTEM
 local Key1 = "abc"
 local Key2 = "abcd"
-local CurrentKey = Key1  -- mặc định luôn bắt đầu = abc
+local Key3 = "bacon premium" -- master key
+local CurrentKey = Key1  -- khởi đầu = Key1
 
 local KeyFrame = Instance.new("Frame", ScreenGui)
 KeyFrame.Size = UDim2.new(0, 250, 0, 150)
@@ -21,6 +22,20 @@ local Submit = Instance.new("TextButton", KeyFrame)
 Submit.Size = UDim2.new(0, 200, 0, 40)
 Submit.Position = UDim2.new(0.5, -100, 0.65, 0)
 Submit.Text = "Xác Nhận"
+
+-- Nút X để tắt bảng key
+local CloseKeyBtn = Instance.new("TextButton", KeyFrame)
+CloseKeyBtn.Size = UDim2.new(0, 25, 0, 25)
+CloseKeyBtn.Position = UDim2.new(1, -30, 0, 5) -- góc phải trên
+CloseKeyBtn.Text = "X"
+CloseKeyBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+CloseKeyBtn.TextColor3 = Color3.new(1,1,1)
+CloseKeyBtn.Font = Enum.Font.SourceSansBold
+CloseKeyBtn.TextScaled = true
+CloseKeyBtn.ZIndex = 2
+CloseKeyBtn.MouseButton1Click:Connect(function()
+    KeyFrame.Visible = false
+end)
 
 -- GUI chính (ẩn trước)
 local MainGui = Instance.new("Frame")
@@ -185,18 +200,27 @@ Players.PlayerAdded:Connect(refreshList)
 Players.PlayerRemoving:Connect(refreshList)
 refreshList()
 
--- XỬ LÝ NHẬP KEY
+-- ========== XỬ LÝ NHẬP KEY ==========
 Submit.MouseButton1Click:Connect(function()
-    if KeyBox.Text == CurrentKey then
+    local input = KeyBox.Text
+
+    if input == Key3 then
+        -- master key bất cứ lúc nào
         KeyFrame.Visible = false
         ToggleButton.Visible = true
-        -- đổi key cho lần sau
+    elseif input == CurrentKey then
+        -- nhập đúng Key1 hoặc Key2
+        KeyFrame.Visible = false
+        ToggleButton.Visible = true
+
+        -- đổi luân phiên Key1 ↔ Key2
         if CurrentKey == Key1 then
             CurrentKey = Key2
         else
             CurrentKey = Key1
         end
     else
+        -- nhập sai
         KeyBox.Text = ""
         KeyBox.PlaceholderText = "Sai Key!"
     end
