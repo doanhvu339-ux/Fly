@@ -26,7 +26,7 @@ Submit.Text = "Xác Nhận"
 -- Nút X để tắt bảng key
 local CloseKeyBtn = Instance.new("TextButton", KeyFrame)
 CloseKeyBtn.Size = UDim2.new(0, 25, 0, 25)
-CloseKeyBtn.Position = UDim2.new(1, -30, 0, 5) -- góc phải trên
+CloseKeyBtn.Position = UDim2.new(1, -30, 0, 5)
 CloseKeyBtn.Text = "X"
 CloseKeyBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
 CloseKeyBtn.TextColor3 = Color3.new(1,1,1)
@@ -199,6 +199,11 @@ end
 Players.PlayerAdded:Connect(refreshList)
 Players.PlayerRemoving:Connect(refreshList)
 refreshList()
+
+-- Nút chạy script mới
+createButton(Tab2,"Run DatThgV2",220,function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/DatThg/refs/heads/main/DatThgV2"))()
+end)
 
 -- ========== XỬ LÝ NHẬP KEY ==========
 Submit.MouseButton1Click:Connect(function()
