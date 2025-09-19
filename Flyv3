@@ -1,232 +1,480 @@
---// Khởi tạo GUI chính
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+-- FULL SCRIPT (key1<->key2 luân phiên 1 tiếng, key3 master) + Tab1 toggles + Tab2 TP+script + Tab3 multi-menu TP
 
--- KEY SYSTEM
+-- SERVICES
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+-- PARENT GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MyFullGui"
+ScreenGui.Parent = game:GetService("CoreGui")
+
+-- =========================
+-- KEY SYSTEM (Key1 <-> Key2 timed, Key3 master)
+-- =========================
 local Key1 = "abc"
 local Key2 = "abcd"
 local Key3 = "bacon premium" -- master key
-local CurrentKey = Key1  -- khởi đầu = Key1
+local CurrentKey = Key1 -- start with Key1
+local KEY_DURATION = 3600 -- seconds (1 hour)
+local keyExpiry = os.time() + KEY_DURATION
 
+-- function to flip current key and reset expiry
+local function setCurrentKeyTo(k)
+    CurrentKey = k
+    keyExpiry = os.time() + KEY_DURATION
+end
+
+-- start timer coroutine to auto-flip when expired
+spawn(function()
+    while true do
+        if keyExpiry and os.time() >= keyExpiry then
+            -- flip between Key1 and Key2
+            if CurrentKey == Key1 then
+                CurrentKey = Key2
+            else
+                CurrentKey = Key1
+            end
+            keyExpiry = os.time() + KEY_DURATION
+        end
+        task.wait(1)
+    end
+end)
+
+-- =========================
+-- KEY GUI (input)
+-- =========================
 local KeyFrame = Instance.new("Frame", ScreenGui)
-KeyFrame.Size = UDim2.new(0, 250, 0, 150)
+KeyFrame.Name = "KeyFrame"
+KeyFrame.Size = UDim2.new(0,250,0,150)
 KeyFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+KeyFrame.BorderSizePixel = 0
 
 local KeyBox = Instance.new("TextBox", KeyFrame)
-KeyBox.Size = UDim2.new(0, 200, 0, 40)
-KeyBox.Position = UDim2.new(0.5, -100, 0.3, 0)
+KeyBox.Size = UDim2.new(0,200,0,40)
+KeyBox.Position = UDim2.new(0.5, -100, 0.25, 0)
 KeyBox.PlaceholderText = "Nhập Key..."
+KeyBox.ClearTextOnFocus = false
 KeyBox.Text = ""
 
-local Submit = Instance.new("TextButton", KeyFrame)
-Submit.Size = UDim2.new(0, 200, 0, 40)
-Submit.Position = UDim2.new(0.5, -100, 0.65, 0)
-Submit.Text = "Xác Nhận"
+local SubmitBtn = Instance.new("TextButton", KeyFrame)
+SubmitBtn.Size = UDim2.new(0,200,0,36)
+SubmitBtn.Position = UDim2.new(0.5, -100, 0.65, 0)
+SubmitBtn.Text = "Xác Nhận"
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+SubmitBtn.TextColor3 = Color3.new(1,1,1)
 
--- Nút X để tắt bảng key
 local CloseKeyBtn = Instance.new("TextButton", KeyFrame)
-CloseKeyBtn.Size = UDim2.new(0, 25, 0, 25)
-CloseKeyBtn.Position = UDim2.new(1, -30, 0, 5)
+CloseKeyBtn.Size = UDim2.new(0,26,0,26)
+CloseKeyBtn.Position = UDim2.new(1, -32, 0, 6)
 CloseKeyBtn.Text = "X"
-CloseKeyBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
-CloseKeyBtn.TextColor3 = Color3.new(1,1,1)
 CloseKeyBtn.Font = Enum.Font.SourceSansBold
 CloseKeyBtn.TextScaled = true
-CloseKeyBtn.ZIndex = 2
+CloseKeyBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+CloseKeyBtn.TextColor3 = Color3.new(1,1,1)
+
 CloseKeyBtn.MouseButton1Click:Connect(function()
     KeyFrame.Visible = false
 end)
 
--- GUI chính (ẩn trước)
-local MainGui = Instance.new("Frame")
-MainGui.Size = UDim2.new(0, 350, 0, 400)
-MainGui.Position = UDim2.new(0.5, -175, 0.5, -200)
-MainGui.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-MainGui.Visible = false
+-- label to show current expected key (optional hint)
+local HintLabel = Instance.new("TextLabel", KeyFrame)
+HintLabel.Position = UDim2.new(0,10,0,6)
+HintLabel.Size = UDim2.new(0,180,0,18)
+HintLabel.BackgroundTransparency = 1
+HintLabel.TextColor3 = Color3.new(1,1,1)
+HintLabel.Font = Enum.Font.SourceSans
+HintLabel.TextSize = 14
+HintLabel.Text = "Key hiện tại: (ẩn)"
+
+-- update hint periodically (shows which key is current but you can remove if you want)
+spawn(function()
+    while true do
+        if CurrentKey == Key1 then
+            HintLabel.Text = "Key hiện tại: Key1 (abc)"
+        elseif CurrentKey == Key2 then
+            HintLabel.Text = "Key hiện tại: Key2 (abcd)"
+        else
+            HintLabel.Text = "Key hiện tại: ?"
+        end
+        task.wait(5)
+    end
+end)
+
+-- =========================
+-- MAIN GUI (menu + tabs)
+-- =========================
+local MainGui = Instance.new("Frame", ScreenGui)
+MainGui.Size = UDim2.new(0,380,0,420)
+MainGui.Position = UDim2.new(0.5, -190, 0.5, -210)
+MainGui.BackgroundColor3 = Color3.fromRGB(35,35,35)
 MainGui.Active = true
 MainGui.Draggable = true
-MainGui.Parent = ScreenGui
+MainGui.Visible = false
+MainGui.Name = "MainGui"
 
--- Toggle Button
 local ToggleButton = Instance.new("TextButton", ScreenGui)
-ToggleButton.Size = UDim2.new(0, 100, 0, 30)
-ToggleButton.Position = UDim2.new(0, 10, 0, 10)
+ToggleButton.Size = UDim2.new(0,100,0,30)
+ToggleButton.Position = UDim2.new(0,10,0,10)
 ToggleButton.Text = "Menu"
 ToggleButton.Visible = false
+ToggleButton.BackgroundColor3 = Color3.fromRGB(70,70,70)
+ToggleButton.TextColor3 = Color3.new(1,1,1)
 ToggleButton.MouseButton1Click:Connect(function()
     MainGui.Visible = not MainGui.Visible
 end)
 
--- Tabs
-local TabFolder = Instance.new("Folder", MainGui)
-local Tab1 = Instance.new("Frame", TabFolder)
-local Tab2 = Instance.new("Frame", TabFolder)
-for _,tab in pairs({Tab1,Tab2}) do
-    tab.Size = UDim2.new(1,0,1,0)
-    tab.BackgroundTransparency = 1
-    tab.Visible = false
-end
-Tab1.Visible = true
-
--- Nút chuyển tab
+-- tab buttons
 local Tab1Btn = Instance.new("TextButton", MainGui)
-Tab1Btn.Size = UDim2.new(0,80,0,25)
+Tab1Btn.Size = UDim2.new(0,100,0,30)
 Tab1Btn.Position = UDim2.new(0,10,0,10)
 Tab1Btn.Text = "Tab 1"
-Tab1Btn.MouseButton1Click:Connect(function()
-    Tab1.Visible = true
-    Tab2.Visible = false
-end)
 
 local Tab2Btn = Instance.new("TextButton", MainGui)
-Tab2Btn.Size = UDim2.new(0,80,0,25)
-Tab2Btn.Position = UDim2.new(0,100,0,10)
+Tab2Btn.Size = UDim2.new(0,100,0,30)
+Tab2Btn.Position = UDim2.new(0,120,0,10)
 Tab2Btn.Text = "Tab 2"
+
+local Tab3Btn = Instance.new("TextButton", MainGui)
+Tab3Btn.Size = UDim2.new(0,100,0,30)
+Tab3Btn.Position = UDim2.new(0,230,0,10)
+Tab3Btn.Text = "Tab 3"
+
+local Tab1 = Instance.new("Frame", MainGui)
+Tab1.Size = UDim2.new(1,-20,1,-60)
+Tab1.Position = UDim2.new(0,10,0,50)
+Tab1.BackgroundTransparency = 1
+Tab1.Visible = true
+
+local Tab2 = Instance.new("Frame", MainGui)
+Tab2.Size = Tab1.Size
+Tab2.Position = Tab1.Position
+Tab2.BackgroundTransparency = 1
+Tab2.Visible = false
+
+local Tab3 = Instance.new("Frame", MainGui)
+Tab3.Size = Tab1.Size
+Tab3.Position = Tab1.Position
+Tab3.BackgroundTransparency = 1
+Tab3.Visible = false
+
+Tab1Btn.MouseButton1Click:Connect(function()
+    Tab1.Visible = true; Tab2.Visible = false; Tab3.Visible = false
+end)
 Tab2Btn.MouseButton1Click:Connect(function()
-    Tab1.Visible = false
-    Tab2.Visible = true
+    Tab1.Visible = false; Tab2.Visible = true; Tab3.Visible = false
+end)
+Tab3Btn.MouseButton1Click:Connect(function()
+    Tab1.Visible = false; Tab2.Visible = false; Tab3.Visible = true
 end)
 
--- Hàm tạo nút
-local function createButton(parent, text, pos, callback)
+-- helper to create button in tabs
+local function createButton(parent, text, y, width)
+    width = width or 240
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(0,200,0,30)
-    btn.Position = UDim2.new(0,75,0,pos)
+    btn.Size = UDim2.new(0,width,0,30)
+    btn.Position = UDim2.new(0,20,0,y)
     btn.Text = text
-    btn.MouseButton1Click:Connect(callback)
+    btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    btn.TextColor3 = Color3.new(1,1,1)
+    return btn
 end
 
--- ========== TAB 1 ==========
-createButton(Tab1,"FlyGui",50,function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
-end)
+-- =========================
+-- TAB1: Toggles (Fly, InfJump, Speed, Noclip, ESP)
+-- =========================
 
-createButton(Tab1,"Infinite Jump",90,function()
-    local UserInputService = game:GetService("UserInputService")
-    UserInputService.JumpRequest:Connect(function()
-        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-    end)
-end)
-
-createButton(Tab1,"Speed",130,function()
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
-end)
-
-createButton(Tab1,"Noclip",170,function()
-    local noclip = true
-    game:GetService("RunService").Stepped:Connect(function()
-        if noclip then
-            for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = false
-                end
-            end
-        end
-    end)
-end)
-
-createButton(Tab1,"ESP Toggle",210,function()
-    local enabled = not _G.ESP
-    _G.ESP = enabled
-    if enabled then
-        for _,plr in pairs(game.Players:GetPlayers()) do
-            if plr ~= game.Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
-                if not plr.Character.Head:FindFirstChild("ESP") then
-                    local billboard = Instance.new("BillboardGui", plr.Character.Head)
-                    billboard.Name = "ESP"
-                    billboard.Size = UDim2.new(0,200,0,50)
-                    billboard.AlwaysOnTop = true
-                    local label = Instance.new("TextLabel", billboard)
-                    label.Size = UDim2.new(1,0,1,0)
-                    label.Text = plr.Name
-                    label.TextColor3 = Color3.new(1,0,0)
-                    label.BackgroundTransparency = 1
-                end
-            end
-        end
+-- FLY toggle (we will load external fly script when enabling)
+local flyEnabled = false
+local flyBtn = createButton(Tab1, "Fly: OFF", 10, 260)
+flyBtn.MouseButton1Click:Connect(function()
+    flyEnabled = not flyEnabled
+    flyBtn.Text = flyEnabled and "Fly: ON" or "Fly: OFF"
+    if flyEnabled then
+        -- try to load external fly (will create its own GUI or behaviour)
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+        end)
     else
-        for _,plr in pairs(game.Players:GetPlayers()) do
-            if plr.Character and plr.Character:FindFirstChild("Head") and plr.Character.Head:FindFirstChild("ESP") then
-                plr.Character.Head.ESP:Destroy()
+        -- disabling external fly may not be supported by that script; we attempt to toggle if possible
+        -- no guaranteed universal disable; user can rejoin to fully reset
+    end
+end)
+
+-- Infinite Jump toggle
+local infJumpEnabled = false
+local infBtn = createButton(Tab1, "Infinite Jump: OFF", 50, 260)
+-- connect once and check flag inside
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled and LocalPlayer and LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState("Jumping") end
+    end
+end)
+infBtn.MouseButton1Click:Connect(function()
+    infJumpEnabled = not infJumpEnabled
+    infBtn.Text = infJumpEnabled and "Infinite Jump: ON" or "Infinite Jump: OFF"
+end)
+
+-- Speed toggle
+local speedEnabled = false
+local speedBtn = createButton(Tab1, "Speed: OFF", 90, 260)
+speedBtn.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    speedBtn.Text = speedEnabled and "Speed: ON" or "Speed: OFF"
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        hum.WalkSpeed = speedEnabled and 100 or 16
+    end
+end)
+-- ensure speed resets if character respawns
+LocalPlayer.CharacterAdded:Connect(function(char)
+    task.wait(0.5)
+    if speedEnabled then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = 100 end
+    end
+end)
+
+-- Noclip toggle
+local noclipEnabled = false
+local noclipBtn = createButton(Tab1, "NoClip: OFF", 130, 260)
+-- single RunService connection that checks flag
+RunService.Stepped:Connect(function()
+    if noclipEnabled and LocalPlayer and LocalPlayer.Character then
+        for _,v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
             end
         end
     end
 end)
+noclipBtn.MouseButton1Click:Connect(function()
+    noclipEnabled = not noclipEnabled
+    noclipBtn.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
+end)
 
--- ========== TAB 2 ==========
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- ESP toggle (BillboardGui on heads)
+local espEnabled = false
+local espBtn = createButton(Tab1, "ESP: OFF", 170, 260)
+local function addESPToPlayer(plr)
+    if plr.Character and plr.Character:FindFirstChild("Head") and not plr.Character.Head:FindFirstChild("ESP_BILL") then
+        local bg = Instance.new("BillboardGui")
+        bg.Name = "ESP_BILL"
+        bg.Adornee = plr.Character.Head
+        bg.Size = UDim2.new(0,120,0,40)
+        bg.AlwaysOnTop = true
+        bg.Parent = plr.Character.Head
+        local lbl = Instance.new("TextLabel", bg)
+        lbl.Size = UDim2.new(1,0,1,0)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = plr.Name
+        lbl.TextColor3 = Color3.new(1,0,0)
+        lbl.TextScaled = true
+    end
+end
+local function removeESPFromPlayer(plr)
+    if plr.Character and plr.Character:FindFirstChild("Head") and plr.Character.Head:FindFirstChild("ESP_BILL") then
+        plr.Character.Head.ESP_BILL:Destroy()
+    end
+end
 
--- Dropdown Frame
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    espBtn.Text = espEnabled and "ESP: ON" or "ESP: OFF"
+    if espEnabled then
+        for _,p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then addESPToPlayer(p) end
+        end
+    else
+        for _,p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then removeESPFromPlayer(p) end
+        end
+    end
+end)
+Players.PlayerAdded:Connect(function(p)
+    if espEnabled then addESPToPlayer(p) end
+end)
+Players.PlayerRemoving:Connect(function(p)
+    -- nothing extra
+end)
+
+-- =========================
+-- TAB2: TP dropdown + external script button
+-- =========================
 local DropFrame = Instance.new("Frame", Tab2)
-DropFrame.Size = UDim2.new(0,200,0,150)
-DropFrame.Position = UDim2.new(0,75,0,50)
-DropFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+DropFrame.Size = UDim2.new(0,260,0,220)
+DropFrame.Position = UDim2.new(0,50,0,10)
+DropFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
 
 local Title = Instance.new("TextLabel", DropFrame)
 Title.Size = UDim2.new(1,0,0,30)
-Title.Text = "Chọn người chơi"
-Title.TextColor3 = Color3.new(1,1,1)
+Title.Position = UDim2.new(0,0,0,0)
 Title.BackgroundTransparency = 1
+Title.Text = "Chọn người chơi để TP"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextScaled = true
 
 local PlayerList = Instance.new("ScrollingFrame", DropFrame)
-PlayerList.Size = UDim2.new(1,0,1,-30)
-PlayerList.Position = UDim2.new(0,0,0,30)
+PlayerList.Position = UDim2.new(0,10,0,35)
+PlayerList.Size = UDim2.new(1,-20,1,-75)
 PlayerList.CanvasSize = UDim2.new(0,0,0,0)
 PlayerList.ScrollBarThickness = 6
+PlayerList.BackgroundTransparency = 1
 
-local function refreshList()
-    PlayerList:ClearAllChildren()
+local function refreshPlayerList()
+    for _,c in pairs(PlayerList:GetChildren()) do
+        if c:IsA("TextButton") then c:Destroy() end
+    end
     local y = 0
     for _,plr in pairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
             local btn = Instance.new("TextButton", PlayerList)
-            btn.Size = UDim2.new(1,0,0,25)
+            btn.Size = UDim2.new(1,0,0,28)
             btn.Position = UDim2.new(0,0,0,y)
             btn.Text = plr.Name
+            btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+            btn.TextColor3 = Color3.new(1,1,1)
             btn.MouseButton1Click:Connect(function()
-                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    LocalPlayer.Character.HumanoidRootPart.CFrame =
-                        plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0)
+                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,10,0) -- cao hơn 10 studs
                 end
             end)
-            y = y + 25
+            y = y + 30
         end
     end
     PlayerList.CanvasSize = UDim2.new(0,0,0,y)
 end
+Players.PlayerAdded:Connect(refreshPlayerList)
+Players.PlayerRemoving:Connect(refreshPlayerList)
+refreshPlayerList()
 
-Players.PlayerAdded:Connect(refreshList)
-Players.PlayerRemoving:Connect(refreshList)
-refreshList()
-
--- Nút chạy script mới
-createButton(Tab2,"Run DatThgV2",220,function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/DatThg/refs/heads/main/DatThgV2"))()
+-- External script button (DatThgV2)
+local runBtn = createButton(Tab2, "Run DatThgV2", 240, 260)
+runBtn.MouseButton1Click:Connect(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/DatThg/refs/heads/main/DatThgV2"))()
+    end)
 end)
 
--- ========== XỬ LÝ NHẬP KEY ==========
-Submit.MouseButton1Click:Connect(function()
-    local input = KeyBox.Text
+-- =========================
+-- TAB3: Create multiple small menus (each with Save TP Delete)
+-- =========================
+local createMenuBtn = createButton(Tab3, "Tạo Menu TP", 10, 260)
+local menusContainer = Instance.new("Frame", Tab3)
+menusContainer.Size = UDim2.new(1,-40,1,-60)
+menusContainer.Position = UDim2.new(0,20,0,50)
+menusContainer.BackgroundTransparency = 1
+-- layout
+local uiList = Instance.new("UIListLayout", menusContainer)
+uiList.Padding = UDim.new(0,8)
 
-    if input == Key3 then
-        -- master key bất cứ lúc nào
-        KeyFrame.Visible = false
-        ToggleButton.Visible = true
-    elseif input == CurrentKey then
-        -- nhập đúng Key1 hoặc Key2
-        KeyFrame.Visible = false
-        ToggleButton.Visible = true
+local function createTPMenu()
+    local frame = Instance.new("Frame", menusContainer)
+    frame.Size = UDim2.new(1,0,0,80)
+    frame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    frame.BorderSizePixel = 0
 
-        -- đổi luân phiên Key1 ↔ Key2
-        if CurrentKey == Key1 then
-            CurrentKey = Key2
-        else
-            CurrentKey = Key1
+    local nameLbl = Instance.new("TextLabel", frame)
+    nameLbl.Size = UDim2.new(0.6,0,0,24)
+    nameLbl.Position = UDim2.new(0,8,0,6)
+    nameLbl.BackgroundTransparency = 1
+    nameLbl.TextColor3 = Color3.new(1,1,1)
+    nameLbl.Text = "TP Menu"
+    nameLbl.TextScaled = true
+
+    local delBtn = Instance.new("TextButton", frame)
+    delBtn.Size = UDim2.new(0,28,0,24)
+    delBtn.Position = UDim2.new(1, -36, 0, 6)
+    delBtn.Text = "X"
+    delBtn.TextColor3 = Color3.new(1,1,1)
+    delBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+
+    local saveBtn = Instance.new("TextButton", frame)
+    saveBtn.Size = UDim2.new(0,120,0,30)
+    saveBtn.Position = UDim2.new(0,8,0,36)
+    saveBtn.Text = "Đặt Vị Trí"
+    saveBtn.BackgroundColor3 = Color3.fromRGB(80,80,80)
+    saveBtn.TextColor3 = Color3.new(1,1,1)
+
+    local tpBtn = Instance.new("TextButton", frame)
+    tpBtn.Size = UDim2.new(0,120,0,30)
+    tpBtn.Position = UDim2.new(0,138,0,36)
+    tpBtn.Text = "TP Vị Trí"
+    tpBtn.BackgroundColor3 = Color3.fromRGB(80,80,80)
+    tpBtn.TextColor3 = Color3.new(1,1,1)
+
+    -- saved position for this menu
+    local savedCFrame = nil
+
+    saveBtn.MouseButton1Click:Connect(function()
+        if LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            savedCFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+            saveBtn.Text = "Đã lưu"
+            task.delay(1.5, function() if saveBtn and saveBtn.Parent then saveBtn.Text = "Đặt Vị Trí" end end)
         end
-    else
-        -- nhập sai
-        KeyBox.Text = ""
-        KeyBox.PlaceholderText = "Sai Key!"
-    end
+    end)
+
+    tpBtn.MouseButton1Click:Connect(function()
+        if savedCFrame and LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = savedCFrame + Vector3.new(0,5,0)
+        else
+            tpBtn.Text = "Chưa lưu!"
+            task.delay(1.2, function() if tpBtn and tpBtn.Parent then tpBtn.Text = "TP Vị Trí" end end)
+        end
+    end)
+
+    delBtn.MouseButton1Click:Connect(function()
+        frame:Destroy()
+    end)
+end
+
+createMenuBtn.MouseButton1Click:Connect(function()
+    createTPMenu()
 end)
+
+-- =========================
+-- KEY SUBMIT HANDLER
+-- =========================
+SubmitBtn.MouseButton1Click:Connect(function()
+    local input = KeyBox.Text and tostring(KeyBox.Text) or ""
+    KeyBox.Text = ""
+    -- master key
+    if input == Key3 then
+        KeyFrame.Visible = false
+        MainGui.Visible = true
+        ToggleButton.Visible = true
+        -- do not change CurrentKey when master used
+        return
+    end
+
+    -- if CurrentKey matches input
+    if input == CurrentKey then
+        KeyFrame.Visible = false
+        MainGui.Visible = true
+        ToggleButton.Visible = true
+        -- after used, flip key for next period and reset expiry
+        if CurrentKey == Key1 then
+            setCurrentKeyTo(Key2)
+        else
+            setCurrentKeyTo(Key1)
+        end
+        return
+    end
+
+    -- wrong
+    KeyBox.PlaceholderText = "Sai Key!"
+    task.delay(1.2, function()
+        if KeyBox and KeyBox.Parent then
+            KeyBox.PlaceholderText = "Nhập Key..."
+        end
+    end)
+end)
+
+-- show KeyFrame at start
+KeyFrame.Visible = true
+
+-- End of script
