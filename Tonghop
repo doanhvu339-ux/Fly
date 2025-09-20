@@ -1,325 +1,313 @@
--- Roblox Full GUI Script
-local player = game.Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
+-- ================== SCREENGUI ==================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MiniMenu"
+ScreenGui.Parent = game.CoreGui
+
+-- ================== BẢNG NHẬP KEY ==================
+local keyFrame = Instance.new("Frame")
+keyFrame.Size = UDim2.new(0, 300, 0, 120)
+keyFrame.Position = UDim2.new(0.5, -150, 0.5, -60)
+keyFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+keyFrame.Parent = ScreenGui
+
+-- Nút đóng (X)
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0, 5)
+closeBtn.Text = "X"
+closeBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.Parent = keyFrame
+closeBtn.MouseButton1Click:Connect(function()
+    keyFrame.Visible = false
+end)
+
+-- Label hướng dẫn
+local keyLabel = Instance.new("TextLabel")
+keyLabel.Size = UDim2.new(1, -20, 0, 30)
+keyLabel.Position = UDim2.new(0, 10, 0, 10)
+keyLabel.Text = "Nhập Key:"
+keyLabel.BackgroundTransparency = 1
+keyLabel.TextColor3 = Color3.new(1,1,1)
+keyLabel.TextScaled = true
+keyLabel.Parent = keyFrame
+
+-- TextBox nhập key
+local keyBox = Instance.new("TextBox")
+keyBox.Size = UDim2.new(1, -20, 0, 30)
+keyBox.Position = UDim2.new(0, 10, 0, 50)
+keyBox.PlaceholderText = "Nhập key ở đây"
+keyBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
+keyBox.TextColor3 = Color3.new(1,1,1)
+keyBox.Parent = keyFrame
+
+-- Key hợp lệ
+local validKeys = {["abc"]=true, ["bpremium"]=true}
+local keyAccepted = false
+
+-- ================== MENU 4 TAB ==================
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 350, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -210)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+MainFrame.Visible = false
+MainFrame.Parent = ScreenGui
+
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1,0,0,40)
+header.BackgroundColor3 = Color3.fromRGB(40,40,40)
+header.Parent = MainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1,0,1,0)
+titleLabel.Text = "MiniMenu"
+titleLabel.TextColor3 = Color3.new(1,1,1)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextScaled = true
+titleLabel.Parent = header
+
+-- Tabs
+local tabs = {"Main","Player","Combat","Script"}
+local tabButtons = {}
+local tabFrames = {}
+
+for i, name in ipairs(tabs) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 80, 0, 30)
+    btn.Position = UDim2.new(0, (i-1)*90 + 10, 0, 40)
+    btn.Text = name
+    btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Parent = MainFrame
+    table.insert(tabButtons, btn)
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1,0,1,-70)
+    frame.Position = UDim2.new(0,0,0,70)
+    frame.BackgroundTransparency = 1
+    frame.Visible = false
+    frame.Parent = MainFrame
+    tabFrames[name] = frame
+end
+tabFrames["Main"].Visible = true
+
+for i, btn in ipairs(tabButtons) do
+    btn.MouseButton1Click:Connect(function()
+        for name, frame in pairs(tabFrames) do
+            frame.Visible = (name == btn.Text)
+        end
+    end)
+end
+
+-- ================== NÚT BẬT/TẮT MENU NGOÀI ==================
+local toggleMenuBtn = Instance.new("TextButton")
+toggleMenuBtn.Size = UDim2.new(0,120,0,40)
+toggleMenuBtn.Position = UDim2.new(0,20,0,20)
+toggleMenuBtn.Text = "[ON] Menu"
+toggleMenuBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+toggleMenuBtn.TextColor3 = Color3.new(1,1,1)
+toggleMenuBtn.Visible = false
+toggleMenuBtn.Parent = ScreenGui
+
+local menuVisible = true
+toggleMenuBtn.MouseButton1Click:Connect(function()
+    if keyAccepted then
+        menuVisible = not menuVisible
+        MainFrame.Visible = menuVisible
+        toggleMenuBtn.Text = (menuVisible and "[ON] Menu" or "[OFF] Menu")
+    end
+end)
+
+-- ================== HÀM TOGGLE THỰC SỰ ==================
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
 
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
+-- ESP
+local espEnabled = false
+local function updateESP(state)
+    espEnabled = state
+end
 
--- SCREENGUI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = player:WaitForChild("PlayerGui")
+RunService.RenderStepped:Connect(function()
+    if espEnabled then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= player and p.Character and not p.Character:FindFirstChild("ESP_Box") then
+                local box = Instance.new("BoxHandleAdornment")
+                box.Name = "ESP_Box"
+                box.Adornee = p.Character:FindFirstChild("HumanoidRootPart")
+                box.Size = Vector3.new(2,5,1)
+                box.Color3 = Color3.fromRGB(0,255,0)
+                box.Transparency = 0.5
+                box.AlwaysOnTop = true
+                box.Parent = p.Character
+            end
+        end
+    else
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p.Character then
+                local box = p.Character:FindFirstChild("ESP_Box")
+                if box then box:Destroy() end
+            end
+        end
+    end
+end)
 
--------------------------------
--- LOGIN PASSWORD
--------------------------------
-local frameLogin = Instance.new("Frame")
-frameLogin.Size = UDim2.new(0, 300, 0, 150)
-frameLogin.Position = UDim2.new(0.5, -150, 0.5, -75)
-frameLogin.BackgroundColor3 = Color3.fromRGB(40,40,40)
-frameLogin.Parent = screenGui
+-- Noclip
+local noclipEnabled = false
+RunService.Stepped:Connect(function()
+    if noclipEnabled then
+        if player.Character then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
 
-local titleLogin = Instance.new("TextLabel")
-titleLogin.Size = UDim2.new(1,0,0,40)
-titleLogin.BackgroundTransparency = 1
-titleLogin.Text = "Nhập mật khẩu"
-titleLogin.TextColor3 = Color3.fromRGB(255,255,255)
-titleLogin.Font = Enum.Font.SourceSansBold
-titleLogin.TextSize = 24
-titleLogin.Parent = frameLogin
+-- InfJump
+local infJumpEnabled = false
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled then
+        if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+            player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
 
-local textbox = Instance.new("TextBox")
-textbox.Size = UDim2.new(0.8,0,0,40)
-textbox.Position = UDim2.new(0.1,0,0.4,0)
-textbox.PlaceholderText = "Nhập mật khẩu..."
-textbox.Text = ""
-textbox.TextScaled = true
-textbox.BackgroundColor3 = Color3.fromRGB(60,60,60)
-textbox.TextColor3 = Color3.fromRGB(255,255,255)
-textbox.Parent = frameLogin
+-- Speed
+local speedValue = 50
+local speedEnabled = false
+local function updateSpeed(state)
+    speedEnabled = state
+    if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+        player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = (state and speedValue or 16)
+    end
+end
 
-local confirmButton = Instance.new("TextButton")
-confirmButton.Size = UDim2.new(0.5,0,0,40)
-confirmButton.Position = UDim2.new(0.25,0,0.75,0)
-confirmButton.Text = "Xác nhận"
-confirmButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-confirmButton.TextColor3 = Color3.fromRGB(255,255,255)
-confirmButton.Font = Enum.Font.SourceSansBold
-confirmButton.TextSize = 20
-confirmButton.Parent = frameLogin
+-- High Jump
+local jumpPower = 100
+local jumpEnabled = false
+local function updateJump(state)
+    jumpEnabled = state
+    if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+        player.Character:FindFirstChildOfClass("Humanoid").JumpPower = (state and jumpPower or 50)
+    end
+end
 
-local correctPassword = "12345"
+-- ================== TAB COMBAT ==================
+local combatFrame = tabFrames["Combat"]
+local hitboxEnabled = false
+local hitboxSize = 5
 
-confirmButton.MouseButton1Click:Connect(function()
-	if textbox.Text == correctPassword then
-		frameLogin.Visible = false
+local hitboxToggle = Instance.new("TextButton")
+hitboxToggle.Size = UDim2.new(0,200,0,30)
+hitboxToggle.Position = UDim2.new(0,70,0,10)
+hitboxToggle.Text = "[OFF] Hitbox"
+hitboxToggle.BackgroundColor3 = Color3.fromRGB(70,70,70)
+hitboxToggle.TextColor3 = Color3.new(1,1,1)
+hitboxToggle.Parent = combatFrame
 
-		-- MAIN MENU FRAME
-		local frameMainMenu = Instance.new("Frame")
-		frameMainMenu.Size = UDim2.new(0, 350, 0, 500)
-		frameMainMenu.Position = UDim2.new(0.5, -175, 0.5, -250)
-		frameMainMenu.BackgroundColor3 = Color3.fromRGB(70,70,70)
-		frameMainMenu.Parent = screenGui
+local function updateHitboxes(state)
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                if state then
+                    hrp.Size = Vector3.new(hitboxSize,hitboxSize,hitboxSize)
+                    hrp.CanCollide = false
+                    hrp.Transparency = 0.5
+                else
+                    hrp.Size = Vector3.new(2,2,1)
+                    hrp.CanCollide = true
+                    hrp.Transparency = 1
+                end
+            end
+        end
+    end
+end
 
-		-- TABS
-		local tabMain = Instance.new("TextButton")
-		tabMain.Size = UDim2.new(1/4,0,0,40)
-		tabMain.Position = UDim2.new(0,0,0,0)
-		tabMain.Text = "Main"
-		tabMain.Font = Enum.Font.SourceSansBold
-		tabMain.TextSize = 20
-		tabMain.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		tabMain.TextColor3 = Color3.fromRGB(255,255,255)
-		tabMain.Parent = frameMainMenu
+hitboxToggle.MouseButton1Click:Connect(function()
+    hitboxEnabled = not hitboxEnabled
+    hitboxToggle.Text = (hitboxEnabled and "[ON] Hitbox" or "[OFF] Hitbox")
+    updateHitboxes(hitboxEnabled)
+end)
 
-		local tabScript = Instance.new("TextButton")
-		tabScript.Size = UDim2.new(1/4,0,0,40)
-		tabScript.Position = UDim2.new(1/4,0,0,0)
-		tabScript.Text = "Script"
-		tabScript.Font = Enum.Font.SourceSansBold
-		tabScript.TextSize = 20
-		tabScript.BackgroundColor3 = Color3.fromRGB(100,100,100)
-		tabScript.TextColor3 = Color3.fromRGB(255,255,255)
-		tabScript.Parent = frameMainMenu
+local sizeBox = Instance.new("TextBox")
+sizeBox.Size = UDim2.new(0,100,0,30)
+sizeBox.Position = UDim2.new(0,70,0,50)
+sizeBox.PlaceholderText = "Hitbox Size"
+sizeBox.Text = tostring(hitboxSize)
+sizeBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
+sizeBox.TextColor3 = Color3.new(1,1,1)
+sizeBox.Parent = combatFrame
 
-		local tabTP = Instance.new("TextButton")
-		tabTP.Size = UDim2.new(1/4,0,0,40)
-		tabTP.Position = UDim2.new(2/4,0,0,0)
-		tabTP.Text = "Menu TP"
-		tabTP.Font = Enum.Font.SourceSansBold
-		tabTP.TextSize = 20
-		tabTP.BackgroundColor3 = Color3.fromRGB(100,100,100)
-		tabTP.TextColor3 = Color3.fromRGB(255,255,255)
-		tabTP.Parent = frameMainMenu
+sizeBox.FocusLost:Connect(function()
+    local num = tonumber(sizeBox.Text)
+    if num and num>0 then
+        hitboxSize = num
+        if hitboxEnabled then updateHitboxes(true) end
+    else
+        sizeBox.Text = tostring(hitboxSize)
+    end
+end)
 
-		local tab4 = Instance.new("TextButton")
-		tab4.Size = UDim2.new(1/4,0,0,40)
-		tab4.Position = UDim2.new(3/4,0,0,0)
-		tab4.Text = "Tab 4"
-		tab4.Font = Enum.Font.SourceSansBold
-		tab4.TextSize = 20
-		tab4.BackgroundColor3 = Color3.fromRGB(100,100,100)
-		tab4.TextColor3 = Color3.fromRGB(255,255,255)
-		tab4.Parent = frameMainMenu
+-- ================== TAB SCRIPT ==================
+local scriptFrame = tabFrames["Script"]
+local scriptLabel = Instance.new("TextLabel")
+scriptLabel.Size = UDim2.new(0,200,0,50)
+scriptLabel.Position = UDim2.new(0,70,0,10)
+scriptLabel.Text = "Script: MiniMenu v1.0"
+scriptLabel.BackgroundColor3 = Color3.fromRGB(50,50,50)
+scriptLabel.TextColor3 = Color3.new(1,1,1)
+scriptLabel.TextScaled = true
+scriptLabel.Parent = scriptFrame
 
-		-- FRAMES
-		local mainTabFrame = Instance.new("Frame")
-		mainTabFrame.Size = UDim2.new(1,0,1,-40)
-		mainTabFrame.Position = UDim2.new(0,0,0,40)
-		mainTabFrame.BackgroundTransparency = 1
-		mainTabFrame.Parent = frameMainMenu
+local flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(0,200,0,30)
+flyBtn.Position = UDim2.new(0,70,0,70)
+flyBtn.Text = "Fly Script"
+flyBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+flyBtn.TextColor3 = Color3.new(1,1,1)
+flyBtn.Parent = scriptFrame
+flyBtn.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+end)
 
-		local scriptTabFrame = Instance.new("Frame")
-		scriptTabFrame.Size = UDim2.new(1,0,1,-40)
-		scriptTabFrame.Position = UDim2.new(0,0,0,40)
-		scriptTabFrame.BackgroundTransparency = 1
-		scriptTabFrame.Visible = false
-		scriptTabFrame.Parent = frameMainMenu
+local datthBtn = Instance.new("TextButton")
+datthBtn.Size = UDim2.new(0,200,0,30)
+datthBtn.Position = UDim2.new(0,70,0,110)
+datthBtn.Text = "DatTh Script"
+datthBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+datthBtn.TextColor3 = Color3.new(1,1,1)
+datthBtn.Parent = scriptFrame
+datthBtn.MouseButton1Click:Connect(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/DatThg/refs/heads/main/DatThgV2"))()
+end)
 
-		local tpTabFrame = Instance.new("Frame")
-		tpTabFrame.Size = UDim2.new(1,0,1,-40)
-		tpTabFrame.Position = UDim2.new(0,0,0,40)
-		tpTabFrame.BackgroundTransparency = 1
-		tpTabFrame.Visible = false
-		tpTabFrame.Parent = frameMainMenu
+-- ================== TAB MAIN & PLAYER ==================
+local mainFrame = tabFrames["Main"]
+createToggle(mainFrame, "ESP", function(state) updateESP(state) end, 10)
+createToggle(mainFrame, "Noclip", function(state) noclipEnabled = state end, 50)
+createToggle(mainFrame, "Inf Jump", function(state) infJumpEnabled = state end, 90)
 
-		local tab4Frame = Instance.new("Frame")
-		tab4Frame.Size = UDim2.new(1,0,1,-40)
-		tab4Frame.Position = UDim2.new(0,0,0,40)
-		tab4Frame.BackgroundTransparency = 1
-		tab4Frame.Visible = false
-		tab4Frame.Parent = frameMainMenu
+local playerFrame = tabFrames["Player"]
+createToggle(playerFrame, "Speed", function(state) updateSpeed(state) end, 10)
+createToggle(playerFrame, "High Jump", function(state) updateJump(state) end, 50)
 
-		-- CHUYỂN TAB
-		local function resetTabColors()
-			tabMain.BackgroundColor3 = Color3.fromRGB(100,100,100)
-			tabScript.BackgroundColor3 = Color3.fromRGB(100,100,100)
-			tabTP.BackgroundColor3 = Color3.fromRGB(100,100,100)
-			tab4.BackgroundColor3 = Color3.fromRGB(100,100,100)
-		end
-
-		tabMain.MouseButton1Click:Connect(function()
-			mainTabFrame.Visible = true
-			scriptTabFrame.Visible = false
-			tpTabFrame.Visible = false
-			tab4Frame.Visible = false
-			resetTabColors()
-			tabMain.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		end)
-
-		tabScript.MouseButton1Click:Connect(function()
-			mainTabFrame.Visible = false
-			scriptTabFrame.Visible = true
-			tpTabFrame.Visible = false
-			tab4Frame.Visible = false
-			resetTabColors()
-			tabScript.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		end)
-
-		tabTP.MouseButton1Click:Connect(function()
-			mainTabFrame.Visible = false
-			scriptTabFrame.Visible = false
-			tpTabFrame.Visible = true
-			tab4Frame.Visible = false
-			resetTabColors()
-			tabTP.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		end)
-
-		tab4.MouseButton1Click:Connect(function()
-			mainTabFrame.Visible = false
-			scriptTabFrame.Visible = false
-			tpTabFrame.Visible = false
-			tab4Frame.Visible = true
-			resetTabColors()
-			tab4.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		end)
-
-		-------------------------------
-		-- TAB MAIN
-		-------------------------------
-		local startY = 0.05
-		local spacing = 0.13
-
-		local fastRunButton = Instance.new("TextButton")
-		fastRunButton.Size = UDim2.new(0.8,0,0,40)
-		fastRunButton.Position = UDim2.new(0.1,0,startY,0)
-		fastRunButton.Text = "Chạy nhanh OFF"
-		fastRunButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		fastRunButton.TextColor3 = Color3.fromRGB(255,255,255)
-		fastRunButton.Font = Enum.Font.SourceSansBold
-		fastRunButton.TextSize = 20
-		fastRunButton.Parent = mainTabFrame
-
-		local fastRunEnabled = false
-		local speedValue = 50
-
-		fastRunButton.MouseButton1Click:Connect(function()
-			fastRunEnabled = not fastRunEnabled
-			fastRunButton.Text = fastRunEnabled and "Chạy nhanh ON" or "Chạy nhanh OFF"
-			if not fastRunEnabled then humanoid.WalkSpeed = 16 end
-		end)
-
-		local speedBox = Instance.new("TextBox")
-		speedBox.Size = UDim2.new(0.8,0,0,40)
-		speedBox.Position = UDim2.new(0.1,0,startY+spacing,0)
-		speedBox.PlaceholderText = "Nhập tốc độ..."
-		speedBox.Text = tostring(speedValue)
-		speedBox.TextScaled = true
-		speedBox.BackgroundColor3 = Color3.fromRGB(60,60,60)
-		speedBox.TextColor3 = Color3.fromRGB(255,255,255)
-		speedBox.Parent = mainTabFrame
-
-		speedBox.FocusLost:Connect(function(enterPressed)
-			local newSpeed = tonumber(speedBox.Text)
-			if newSpeed then speedValue = newSpeed end
-		end)
-
-		local infJumpButton = Instance.new("TextButton")
-		infJumpButton.Size = UDim2.new(0.8,0,0,40)
-		infJumpButton.Position = UDim2.new(0.1,0,startY+spacing*2,0)
-		infJumpButton.Text = "Inf Jump OFF"
-		infJumpButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		infJumpButton.TextColor3 = Color3.fromRGB(255,255,255)
-		infJumpButton.Font = Enum.Font.SourceSansBold
-		infJumpButton.TextSize = 20
-		infJumpButton.Parent = mainTabFrame
-
-		local infJumpEnabled = false
-		infJumpButton.MouseButton1Click:Connect(function()
-			infJumpEnabled = not infJumpEnabled
-			infJumpButton.Text = infJumpEnabled and "Inf Jump ON" or "Inf Jump OFF"
-		end)
-
-		UserInputService.JumpRequest:Connect(function()
-			if infJumpEnabled then
-				humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-			end
-		end)
-
-		local noclipButton = Instance.new("TextButton")
-		noclipButton.Size = UDim2.new(0.8,0,0,40)
-		noclipButton.Position = UDim2.new(0.1,0,startY+spacing*3,0)
-		noclipButton.Text = "Noclip OFF"
-		noclipButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		noclipButton.TextColor3 = Color3.fromRGB(255,255,255)
-		noclipButton.Font = Enum.Font.SourceSansBold
-		noclipButton.TextSize = 20
-		noclipButton.Parent = mainTabFrame
-
-		local noclipEnabled = false
-		noclipButton.MouseButton1Click:Connect(function()
-			noclipEnabled = not noclipEnabled
-			noclipButton.Text = noclipEnabled and "Noclip ON" or "Noclip OFF"
-		end)
-
-		RunService.Stepped:Connect(function()
-			if noclipEnabled and character then
-				for _, part in pairs(character:GetChildren()) do
-					if part:IsA("BasePart") then
-						part.CanCollide = false
-					end
-				end
-			end
-		end)
-
-		local espButton = Instance.new("TextButton")
-		espButton.Size = UDim2.new(0.8,0,0,40)
-		espButton.Position = UDim2.new(0.1,0,startY+spacing*4,0)
-		espButton.Text = "ESP"
-		espButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		espButton.TextColor3 = Color3.fromRGB(255,255,255)
-		espButton.Font = Enum.Font.SourceSansBold
-		espButton.TextSize = 20
-		espButton.Parent = mainTabFrame
-
-		-------------------------------
-		-- TAB SCRIPT
-		-------------------------------
-		local flyButton = Instance.new("TextButton")
-		flyButton.Size = UDim2.new(0.8,0,0,40)
-		flyButton.Position = UDim2.new(0.1,0,0.05,0)
-		flyButton.Text = "Fly"
-		flyButton.Font = Enum.Font.SourceSansBold
-		flyButton.TextSize = 20
-		flyButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		flyButton.TextColor3 = Color3.fromRGB(255,255,255)
-		flyButton.Parent = scriptTabFrame
-
-		flyButton.MouseButton1Click:Connect(function()
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
-		end)
-
-		local bloxFruitButton = Instance.new("TextButton")
-		bloxFruitButton.Size = UDim2.new(0.8,0,0,40)
-		bloxFruitButton.Position = UDim2.new(0.1,0,0.20,0)
-		bloxFruitButton.Text = "Blox Fruit"
-		bloxFruitButton.Font = Enum.Font.SourceSansBold
-		bloxFruitButton.TextSize = 20
-		bloxFruitButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		bloxFruitButton.TextColor3 = Color3.fromRGB(255,255,255)
-		bloxFruitButton.Parent = scriptTabFrame
-
-		bloxFruitButton.MouseButton1Click:Connect(function()
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/DatThg/refs/heads/main/DatThgV2"))()
-		end)
-
-		-------------------------------
-		-- TAB TP
-		-------------------------------
-		local tpSubMenu = Instance.new("Frame")
-		tpSubMenu.Size = UDim2.new(0,200,0,250)
-		tpSubMenu.Position = UDim2.new(0.5,-100,0.5,-125)
-		tpSubMenu.BackgroundColor3 = Color3.fromRGB(50,50,50)
-		tpSubMenu.Parent = tpTabFrame
-		tpSubMenu.Visible = false
-		tpSubMenu.Active = true
-		tpSubMenu.Draggable = true
-
-		local tpSubTitle = Instance.new("TextLabel")
-		tpSubTitle.Size = UDim2.new(1,0,0,30)
-		tpSubTitle.Position = UDim2.new(0,0,0,0)
-		tpSubTitle.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		tpSubTitle.Text = "Menu TP"
-		tpSubTitle.TextColor3 = Color3.fromRGB(255,255,255)
-		tpSubTitle.Font = Enum.Font.SourceSans
+-- ================== KÍCH HOẠT MENU SAU NHẬP KEY ==================
+keyBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        if validKeys[keyBox.Text] then
+            keyFrame.Visible = false
+            MainFrame.Visible = true
+            toggleMenuBtn.Visible = true
+            keyAccepted = true
+        else
+            keyBox.Text = ""
+            print("Key sai!")
+        end
+    end
+end)
