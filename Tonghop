@@ -1,75 +1,71 @@
--- Roblox full GUI Script
-
+-- Roblox Full GUI Script
 local player = game.Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 
--- ScreenGui
+-- SCREENGUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 -------------------------------
--- MENU NHẬP MẬT KHẨU
+-- LOGIN PASSWORD
 -------------------------------
 local frameLogin = Instance.new("Frame")
 frameLogin.Size = UDim2.new(0, 300, 0, 150)
 frameLogin.Position = UDim2.new(0.5, -150, 0.5, -75)
-frameLogin.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frameLogin.BackgroundColor3 = Color3.fromRGB(40,40,40)
 frameLogin.Parent = screenGui
 
 local titleLogin = Instance.new("TextLabel")
-titleLogin.Size = UDim2.new(1, 0, 0, 40)
+titleLogin.Size = UDim2.new(1,0,0,40)
 titleLogin.BackgroundTransparency = 1
 titleLogin.Text = "Nhập mật khẩu"
-titleLogin.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLogin.TextColor3 = Color3.fromRGB(255,255,255)
 titleLogin.Font = Enum.Font.SourceSansBold
 titleLogin.TextSize = 24
 titleLogin.Parent = frameLogin
 
 local textbox = Instance.new("TextBox")
-textbox.Size = UDim2.new(0.8, 0, 0, 40)
-textbox.Position = UDim2.new(0.1, 0, 0.4, 0)
+textbox.Size = UDim2.new(0.8,0,0,40)
+textbox.Position = UDim2.new(0.1,0,0.4,0)
 textbox.PlaceholderText = "Nhập mật khẩu..."
 textbox.Text = ""
 textbox.TextScaled = true
-textbox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-textbox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textbox.BackgroundColor3 = Color3.fromRGB(60,60,60)
+textbox.TextColor3 = Color3.fromRGB(255,255,255)
 textbox.Parent = frameLogin
 
 local confirmButton = Instance.new("TextButton")
-confirmButton.Size = UDim2.new(0.5, 0, 0, 40)
-confirmButton.Position = UDim2.new(0.25, 0, 0.75, 0)
+confirmButton.Size = UDim2.new(0.5,0,0,40)
+confirmButton.Position = UDim2.new(0.25,0,0.75,0)
 confirmButton.Text = "Xác nhận"
-confirmButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-confirmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+confirmButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
+confirmButton.TextColor3 = Color3.fromRGB(255,255,255)
 confirmButton.Font = Enum.Font.SourceSansBold
 confirmButton.TextSize = 20
 confirmButton.Parent = frameLogin
 
--------------------------------
--- XÁC NHẬN MẬT KHẨU
--------------------------------
 local correctPassword = "12345"
 
 confirmButton.MouseButton1Click:Connect(function()
 	if textbox.Text == correctPassword then
 		frameLogin.Visible = false
 
-		-- MENU CHÍNH
+		-- MAIN MENU FRAME
 		local frameMainMenu = Instance.new("Frame")
-		frameMainMenu.Size = UDim2.new(0, 300, 0, 450)
-		frameMainMenu.Position = UDim2.new(0.5, -150, 0.5, -225)
-		frameMainMenu.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+		frameMainMenu.Size = UDim2.new(0, 350, 0, 500)
+		frameMainMenu.Position = UDim2.new(0.5, -175, 0.5, -250)
+		frameMainMenu.BackgroundColor3 = Color3.fromRGB(70,70,70)
 		frameMainMenu.Parent = screenGui
 
-		-- TAB BUTTONS
+		-- TABS
 		local tabMain = Instance.new("TextButton")
-		tabMain.Size = UDim2.new(1/3, 0, 0, 40)
-		tabMain.Position = UDim2.new(0, 0, 0, 0)
+		tabMain.Size = UDim2.new(1/4,0,0,40)
+		tabMain.Position = UDim2.new(0,0,0,0)
 		tabMain.Text = "Main"
 		tabMain.Font = Enum.Font.SourceSansBold
 		tabMain.TextSize = 20
@@ -78,8 +74,8 @@ confirmButton.MouseButton1Click:Connect(function()
 		tabMain.Parent = frameMainMenu
 
 		local tabScript = Instance.new("TextButton")
-		tabScript.Size = UDim2.new(1/3, 0, 0, 40)
-		tabScript.Position = UDim2.new(1/3, 0, 0, 0)
+		tabScript.Size = UDim2.new(1/4,0,0,40)
+		tabScript.Position = UDim2.new(1/4,0,0,0)
 		tabScript.Text = "Script"
 		tabScript.Font = Enum.Font.SourceSansBold
 		tabScript.TextSize = 20
@@ -88,8 +84,8 @@ confirmButton.MouseButton1Click:Connect(function()
 		tabScript.Parent = frameMainMenu
 
 		local tabTP = Instance.new("TextButton")
-		tabTP.Size = UDim2.new(1/3, 0, 0, 40)
-		tabTP.Position = UDim2.new(2/3, 0, 0, 0)
+		tabTP.Size = UDim2.new(1/4,0,0,40)
+		tabTP.Position = UDim2.new(2/4,0,0,0)
 		tabTP.Text = "Menu TP"
 		tabTP.Font = Enum.Font.SourceSansBold
 		tabTP.TextSize = 20
@@ -97,7 +93,17 @@ confirmButton.MouseButton1Click:Connect(function()
 		tabTP.TextColor3 = Color3.fromRGB(255,255,255)
 		tabTP.Parent = frameMainMenu
 
-		-- FRAMES TAB
+		local tab4 = Instance.new("TextButton")
+		tab4.Size = UDim2.new(1/4,0,0,40)
+		tab4.Position = UDim2.new(3/4,0,0,0)
+		tab4.Text = "Tab 4"
+		tab4.Font = Enum.Font.SourceSansBold
+		tab4.TextSize = 20
+		tab4.BackgroundColor3 = Color3.fromRGB(100,100,100)
+		tab4.TextColor3 = Color3.fromRGB(255,255,255)
+		tab4.Parent = frameMainMenu
+
+		-- FRAMES
 		local mainTabFrame = Instance.new("Frame")
 		mainTabFrame.Size = UDim2.new(1,0,1,-40)
 		mainTabFrame.Position = UDim2.new(0,0,0,40)
@@ -118,41 +124,63 @@ confirmButton.MouseButton1Click:Connect(function()
 		tpTabFrame.Visible = false
 		tpTabFrame.Parent = frameMainMenu
 
+		local tab4Frame = Instance.new("Frame")
+		tab4Frame.Size = UDim2.new(1,0,1,-40)
+		tab4Frame.Position = UDim2.new(0,0,0,40)
+		tab4Frame.BackgroundTransparency = 1
+		tab4Frame.Visible = false
+		tab4Frame.Parent = frameMainMenu
+
 		-- CHUYỂN TAB
+		local function resetTabColors()
+			tabMain.BackgroundColor3 = Color3.fromRGB(100,100,100)
+			tabScript.BackgroundColor3 = Color3.fromRGB(100,100,100)
+			tabTP.BackgroundColor3 = Color3.fromRGB(100,100,100)
+			tab4.BackgroundColor3 = Color3.fromRGB(100,100,100)
+		end
+
 		tabMain.MouseButton1Click:Connect(function()
 			mainTabFrame.Visible = true
 			scriptTabFrame.Visible = false
 			tpTabFrame.Visible = false
+			tab4Frame.Visible = false
+			resetTabColors()
 			tabMain.BackgroundColor3 = Color3.fromRGB(0,170,255)
-			tabScript.BackgroundColor3 = Color3.fromRGB(100,100,100)
-			tabTP.BackgroundColor3 = Color3.fromRGB(100,100,100)
 		end)
 
 		tabScript.MouseButton1Click:Connect(function()
 			mainTabFrame.Visible = false
 			scriptTabFrame.Visible = true
 			tpTabFrame.Visible = false
-			tabMain.BackgroundColor3 = Color3.fromRGB(100,100,100)
+			tab4Frame.Visible = false
+			resetTabColors()
 			tabScript.BackgroundColor3 = Color3.fromRGB(0,170,255)
-			tabTP.BackgroundColor3 = Color3.fromRGB(100,100,100)
 		end)
 
 		tabTP.MouseButton1Click:Connect(function()
 			mainTabFrame.Visible = false
 			scriptTabFrame.Visible = false
 			tpTabFrame.Visible = true
-			tabMain.BackgroundColor3 = Color3.fromRGB(100,100,100)
-			tabScript.BackgroundColor3 = Color3.fromRGB(100,100,100)
+			tab4Frame.Visible = false
+			resetTabColors()
 			tabTP.BackgroundColor3 = Color3.fromRGB(0,170,255)
 		end)
 
+		tab4.MouseButton1Click:Connect(function()
+			mainTabFrame.Visible = false
+			scriptTabFrame.Visible = false
+			tpTabFrame.Visible = false
+			tab4Frame.Visible = true
+			resetTabColors()
+			tab4.BackgroundColor3 = Color3.fromRGB(0,170,255)
+		end)
+
 		-------------------------------
-		-- TAB MAIN: Chạy nhanh, Inf Jump, Noclip, ESP
+		-- TAB MAIN
 		-------------------------------
 		local startY = 0.05
 		local spacing = 0.13
 
-		-- Chạy nhanh
 		local fastRunButton = Instance.new("TextButton")
 		fastRunButton.Size = UDim2.new(0.8,0,0,40)
 		fastRunButton.Position = UDim2.new(0.1,0,startY,0)
@@ -187,7 +215,6 @@ confirmButton.MouseButton1Click:Connect(function()
 			if newSpeed then speedValue = newSpeed end
 		end)
 
-		-- Inf Jump
 		local infJumpButton = Instance.new("TextButton")
 		infJumpButton.Size = UDim2.new(0.8,0,0,40)
 		infJumpButton.Position = UDim2.new(0.1,0,startY+spacing*2,0)
@@ -210,7 +237,6 @@ confirmButton.MouseButton1Click:Connect(function()
 			end
 		end)
 
-		-- Noclip
 		local noclipButton = Instance.new("TextButton")
 		noclipButton.Size = UDim2.new(0.8,0,0,40)
 		noclipButton.Position = UDim2.new(0.1,0,startY+spacing*3,0)
@@ -237,7 +263,6 @@ confirmButton.MouseButton1Click:Connect(function()
 			end
 		end)
 
-		-- ESP placeholder (tùy chỉnh thêm)
 		local espButton = Instance.new("TextButton")
 		espButton.Size = UDim2.new(0.8,0,0,40)
 		espButton.Position = UDim2.new(0.1,0,startY+spacing*4,0)
@@ -249,7 +274,7 @@ confirmButton.MouseButton1Click:Connect(function()
 		espButton.Parent = mainTabFrame
 
 		-------------------------------
-		-- TAB SCRIPT: Fly, Blox Fruit
+		-- TAB SCRIPT
 		-------------------------------
 		local flyButton = Instance.new("TextButton")
 		flyButton.Size = UDim2.new(0.8,0,0,40)
@@ -280,12 +305,12 @@ confirmButton.MouseButton1Click:Connect(function()
 		end)
 
 		-------------------------------
-		-- TAB MENU TP: menu con di chuyển được
+		-- TAB TP
 		-------------------------------
 		local tpSubMenu = Instance.new("Frame")
-		tpSubMenu.Size = UDim2.new(0, 200, 0, 250)
-		tpSubMenu.Position = UDim2.new(0.5, -100, 0.5, -125)
-		tpSubMenu.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		tpSubMenu.Size = UDim2.new(0,200,0,250)
+		tpSubMenu.Position = UDim2.new(0.5,-100,0.5,-125)
+		tpSubMenu.BackgroundColor3 = Color3.fromRGB(50,50,50)
 		tpSubMenu.Parent = tpTabFrame
 		tpSubMenu.Visible = false
 		tpSubMenu.Active = true
@@ -297,51 +322,4 @@ confirmButton.MouseButton1Click:Connect(function()
 		tpSubTitle.BackgroundColor3 = Color3.fromRGB(0,170,255)
 		tpSubTitle.Text = "Menu TP"
 		tpSubTitle.TextColor3 = Color3.fromRGB(255,255,255)
-		tpSubTitle.Font = Enum.Font.SourceSansBold
-		tpSubTitle.TextSize = 20
-		tpSubTitle.Parent = tpSubMenu
-
-		local toggleTPSubMenu = Instance.new("TextButton")
-		toggleTPSubMenu.Size = UDim2.new(0.8,0,0,40)
-		toggleTPSubMenu.Position = UDim2.new(0.1,0,0.05,0)
-		toggleTPSubMenu.Text = "Mở menu con TP"
-		toggleTPSubMenu.Font = Enum.Font.SourceSansBold
-		toggleTPSubMenu.TextSize = 18
-		toggleTPSubMenu.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		toggleTPSubMenu.TextColor3 = Color3.fromRGB(255,255,255)
-		toggleTPSubMenu.Parent = tpTabFrame
-
-		toggleTPSubMenu.MouseButton1Click:Connect(function()
-			tpSubMenu.Visible = not tpSubMenu.Visible
-		end)
-
-		-- Biến lưu TP
-		local savedTPPosition = nil
-
-		-- Nút Đặt TP
-		local setTPButton = Instance.new("TextButton")
-		setTPButton.Size = UDim2.new(0.8,0,0,40)
-		setTPButton.Position = UDim2.new(0.1,0,0.2,0)
-		setTPButton.Text = "Đặt TP"
-		setTPButton.Font = Enum.Font.SourceSansBold
-		setTPButton.TextSize = 18
-		setTPButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		setTPButton.TextColor3 = Color3.fromRGB(255,255,255)
-		setTPButton.Parent = tpSubMenu
-
-		setTPButton.MouseButton1Click:Connect(function()
-			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-				savedTPPosition = player.Character.HumanoidRootPart.Position
-				print("✅ Vị trí TP đã lưu:", savedTPPosition)
-			end
-		end)
-
-		-- Nút TP
-		local tpButton = Instance.new("TextButton")
-		tpButton.Size = UDim2.new(0.8,0,0,40)
-		tpButton.Position = UDim2.new(0.1,0,0.35,0)
-		tpButton.Text = "TP"
-		tpButton.Font = Enum.Font.SourceSansBold
-		tpButton.TextSize = 18
-		tpButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
-		tpButton.TextColor3 = Color3.fromRGB(255,255,255)
+		tpSubTitle.Font = Enum.Font.SourceSans
