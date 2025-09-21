@@ -1,0 +1,55 @@
+-- Gui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "TPGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.CoreGui -- Hoặc PlayerGui nếu muốn
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 120)
+Frame.Position = UDim2.new(0.5, -100, 0.5, -60)
+Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.FillDirection = Enum.FillDirection.Vertical
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+UIListLayout.Padding = UDim.new(0,10)
+UIListLayout.Parent = Frame
+
+-- Biến lưu vị trí
+local savedPosition = nil
+
+-- Nút đặt vị trí
+local setPosButton = Instance.new("TextButton")
+setPosButton.Size = UDim2.new(0, 180, 0, 40)
+setPosButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+setPosButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+setPosButton.Text = "Đặt vị trí TP"
+setPosButton.Parent = Frame
+
+setPosButton.MouseButton1Click:Connect(function()
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        savedPosition = character.HumanoidRootPart.Position
+        setPosButton.Text = "Vị trí đã đặt!"
+    end
+end)
+
+-- Nút TP
+local tpButton = Instance.new("TextButton")
+tpButton.Size = UDim2.new(0, 180, 0, 40)
+tpButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+tpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpButton.Text = "TP đến vị trí"
+tpButton.Parent = Frame
+
+tpButton.MouseButton1Click:Connect(function()
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") and savedPosition then
+        character.HumanoidRootPart.CFrame = CFrame.new(savedPosition)
+    else
+        tpButton.Text = "Chưa đặt vị trí!"
+    end
+end)
