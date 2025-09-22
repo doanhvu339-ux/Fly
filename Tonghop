@@ -8,7 +8,11 @@ local HttpService = game:GetService("HttpService")
 
 --// Load/Save Data
 local saveFile = "menu_settings.json"
-local settings = {infJump=false, noclip=false, walkspeed=false, walkspeedValue=16, hitboxAll=false, hitboxEnemy=false, espAll=false, espEnemy=false}
+local settings = {
+    infJump=false, noclip=false, walkspeed=false, walkspeedValue=16,
+    hitboxAll=false, hitboxEnemy=false, espAll=false, espEnemy=false,
+    hitboxSize=7
+}
 
 local function saveSettings()
     if writefile then
@@ -73,7 +77,7 @@ local function createMainUI()
         for _,c in ipairs(content:GetChildren()) do c:Destroy() end
     end
 
-    -- Player Tab
+    --// Player Tab
     local function playerTab()
         clearContent()
         local y = 10
@@ -170,11 +174,27 @@ local function createMainUI()
         game.Players.PlayerRemoving:Connect(refreshPlayers)
     end
 
-    -- ESP Tab
+    --// ESP Tab
     local function espTab()
         clearContent()
         local y=10
-        -- Hitbox All
+
+        -- Ô nhập Hitbox Size
+        local hbBox = Instance.new("TextBox", content)
+        hbBox.Size = UDim2.new(1,-20,0,30)
+        hbBox.Position = UDim2.new(0,10,0,y)
+        hbBox.Text = tostring(settings.hitboxSize or 7)
+        hbBox.PlaceholderText = "Nhập kích thước Hitbox"
+        hbBox.FocusLost:Connect(function()
+            local n = tonumber(hbBox.Text)
+            if n then
+                settings.hitboxSize = n
+                saveSettings()
+            end
+        end)
+        y=y+40
+
+        -- Nút Hitbox All
         local hitAll = Instance.new("TextButton", content)
         hitAll.Size=UDim2.new(1,-20,0,30)
         hitAll.Position=UDim2.new(0,10,0,y)
@@ -185,7 +205,8 @@ local function createMainUI()
             saveSettings()
         end)
         y=y+40
-        -- Hitbox Enemy
+
+        -- Nút Hitbox Enemy
         local hitEnemy = Instance.new("TextButton", content)
         hitEnemy.Size=UDim2.new(1,-20,0,30)
         hitEnemy.Position=UDim2.new(0,10,0,y)
@@ -196,7 +217,8 @@ local function createMainUI()
             saveSettings()
         end)
         y=y+40
-        -- ESP All
+
+        -- Nút ESP All
         local espAll = Instance.new("TextButton", content)
         espAll.Size=UDim2.new(1,-20,0,30)
         espAll.Position=UDim2.new(0,10,0,y)
@@ -207,7 +229,8 @@ local function createMainUI()
             saveSettings()
         end)
         y=y+40
-        -- ESP Enemy
+
+        -- Nút ESP Enemy
         local espEnemy = Instance.new("TextButton", content)
         espEnemy.Size=UDim2.new(1,-20,0,30)
         espEnemy.Position=UDim2.new(0,10,0,y)
@@ -219,7 +242,7 @@ local function createMainUI()
         end)
     end
 
-    -- Script Tab
+    --// Script Tab
     local function scriptTab()
         clearContent()
         local y=10
@@ -294,7 +317,7 @@ local function createMainUI()
                 local root=p.Character:FindFirstChild("HumanoidRootPart")
                 if humanoid and root then
                     if settings.hitboxAll or (settings.hitboxEnemy and p.Team~=player.Team) then
-                        root.Size=Vector3.new(7,7,7)
+                        root.Size=Vector3.new(settings.hitboxSize or 7,settings.hitboxSize or 7,settings.hitboxSize or 7)
                         root.Transparency=0.7
                         root.BrickColor=BrickColor.new("Lime green")
                         root.Material=Enum.Material.ForceField
@@ -314,7 +337,7 @@ local function createMainUI()
     end)
 end
 
--- Key System
+--// Key System
 keyBtn.MouseButton1Click:Connect(function()
     local k=keyBox.Text
     for _,v in ipairs(validKeys) do
