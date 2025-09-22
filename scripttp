@@ -1,7 +1,7 @@
--- Gui
 local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
+local UIS = game:GetService("UserInputService")
 
+-- GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "DragTPGui"
 ScreenGui.ResetOnSpawn = false
@@ -11,18 +11,27 @@ local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 200, 0, 120)
 Frame.Position = UDim2.new(0.5, -100, 0.5, -60)
 Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-Frame.BorderSizePixel = 0
+Frame.Active = true   -- QUAN TRỌNG để Frame nhận input
+Frame.Draggable = false -- deprecated, nên dùng code dưới
 Frame.Parent = ScreenGui
 
--- Cho phép kéo thả
-local dragging = false
-local dragInput, mousePos, framePos
+-- Kéo thả thủ công
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    Frame.Position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    )
+end
 
 Frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
-        mousePos = input.Position
-        framePos = Frame.Position
+        dragStart = input.Position
+        startPos = Frame.Position
+
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
@@ -32,15 +41,14 @@ Frame.InputBegan:Connect(function(input)
 end)
 
 Frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
 
-game:GetService("UserInputService").InputChanged:Connect(function(input)
+UIS.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
-        local delta = input.Position - mousePos
-        Frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+        update(input)
     end
 end)
 
