@@ -1,5 +1,5 @@
--- FULL SCRIPT (FINAL) - Create Main UI ONLY AFTER key entry, persistent settings
--- Paste into executor / LocalScript. Requires writefile/readfile for persistence (fallback to getgenv).
+-- FINAL FULL SCRIPT - Key-gated, persistent settings, fixes applied
+-- Paste into executor / LocalScript (PlayerGui). Requires writefile/readfile for persistence (fallback to getgenv).
 
 -- Services
 local Players = game:GetService("Players")
@@ -26,8 +26,8 @@ local defaultSettings = {
     playerListVisible = false
 }
 
--- Persistence helpers (safe)
-local function fileRead(name)
+-- Persistence helpers
+local function safeRead(name)
     if type(readfile) == "function" then
         local ok, content = pcall(readfile, name)
         if ok then return content end
@@ -36,7 +36,7 @@ local function fileRead(name)
         return getgenv().__custom_menu_file_data
     end
 end
-local function fileWrite(name, content)
+local function safeWrite(name, content)
     if type(writefile) == "function" then
         pcall(writefile, name, content)
     else
@@ -47,47 +47,35 @@ end
 -- Load settings
 local settings = {}
 do
-    local raw = fileRead(SETTINGS_FILE)
+    local raw = safeRead(SETTINGS_FILE)
     if raw then
         local ok, dec = pcall(function() return HttpService:JSONDecode(raw) end)
-        if ok and type(dec) == "table" then
-            settings = dec
-        else
-            settings = defaultSettings
-        end
+        if ok and type(dec) == "table" then settings = dec else settings = defaultSettings end
     else
         settings = defaultSettings
     end
-    -- ensure all keys present
     for k,v in pairs(defaultSettings) do if settings[k] == nil then settings[k] = v end end
-    -- write back file to ensure exists
-    pcall(function() fileWrite(SETTINGS_FILE, HttpService:JSONEncode(settings)) end)
+    pcall(function() safeWrite(SETTINGS_FILE, HttpService:JSONEncode(settings)) end)
 end
-
-local function saveSettings()
-    local ok, encoded = pcall(function() return HttpService:JSONEncode(settings) end)
-    if ok and encoded then pcall(fileWrite, SETTINGS_FILE, encoded) end
-end
+local function saveSettings() local ok, enc = pcall(function() return HttpService:JSONEncode(settings) end) if ok and enc then pcall(safeWrite, SETTINGS_FILE, enc) end end
 local function setAndSave(k,v) settings[k]=v; saveSettings() end
 
--- Runtime state (will be set from settings when main UI created)
+-- Runtime (will be initialized from settings when main UI created)
 local infJumpEnabled, noclipEnabled, wsEnabled = false,false,false
 local walkspeedValue = 16
 local hbAllEnabled, hbEnemyEnabled, hbSizeValue = false,false,5
 local espAllEnabled, espEnemyEnabled = false,false
 local playerListVisible = false
 
--- helper isEnemy
+-- helpers
+local originalProps = {} -- [userId] = {Size,Transparency,Material,Color,CanCollide}
 local function isEnemy(p)
     if not p then return true end
     if player.Team and p.Team then return player.Team ~= p.Team end
     return true
 end
 
--- store original HRP props for restore
-local originalProps = {} -- [UserId] = { Size, Transparency, Material, Color, CanCollide }
-
-local function saveOriginalPropsFor(pl)
+local function saveOriginalProps(pl)
     if not pl or not pl.Character then return end
     local hrp = pl.Character:FindFirstChild("HumanoidRootPart")
     if hrp and not originalProps[pl.UserId] then
@@ -100,20 +88,22 @@ local function saveOriginalPropsFor(pl)
         }
     end
 end
-local function applyHitboxTo(pl,size)
+
+local function applyHitbox(pl, size)
     if not pl or not pl.Character then return end
     local hrp = pl.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-    saveOriginalPropsFor(pl)
+    saveOriginalProps(pl)
     pcall(function()
-        hrp.Size = Vector3.new(size,size,size)
-        hrp.Transparency = 0.7
-        hrp.Material = Enum.Material.Neon
+        hrp.Size = Vector3.new(size, size, size)
+        hrp.Transparency = 0.6
+        hrp.Material = Enum.Material.SmoothPlastic
         hrp.Color = Color3.fromRGB(0,255,0)
         hrp.CanCollide = false
     end)
 end
-local function resetHitboxFor(pl)
+
+local function resetHitbox(pl)
     if not pl or not pl.Character then return end
     local hrp = pl.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -138,7 +128,7 @@ local function resetHitboxFor(pl)
     end
 end
 
-local function addHighlightTo(pl, color)
+local function addHighlight(pl, color)
     if not pl or not pl.Character then return end
     local hl = pl.Character:FindFirstChild("ESPHighlight")
     if not hl then
@@ -150,104 +140,111 @@ local function addHighlightTo(pl, color)
     end
     pcall(function() hl.OutlineColor = color end)
 end
-local function removeHighlightFrom(pl)
+local function removeHighlight(pl)
     if not pl or not pl.Character then return end
     local hl = pl.Character:FindFirstChild("ESPHighlight")
     if hl then pcall(function() hl:Destroy() end) end
 end
 
--- -------------------------
--- KEY UI (only UI present at startup)
--- -------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "CustomMenu_KeyOnly"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = player:WaitForChild("PlayerGui")
+Players.PlayerRemoving:Connect(function(pl) if originalProps[pl.UserId] then originalProps[pl.UserId] = nil end end)
 
-local keyFrame = Instance.new("Frame", ScreenGui)
-keyFrame.Name = "KeyFrame"
+-- ---------------- Key UI (only present at start) ----------------
+local KeyGui = Instance.new("ScreenGui")
+KeyGui.Name = "CustomMenu_KeyOnly"
+KeyGui.ResetOnSpawn = false
+KeyGui.Parent = player:WaitForChild("PlayerGui")
+
+local keyFrame = Instance.new("Frame", KeyGui)
 keyFrame.Size = UDim2.new(0, 340, 0, 180)
 keyFrame.Position = UDim2.new(0.5, -170, 0.5, -90)
 keyFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
 keyFrame.BorderSizePixel = 0
 
-local title = Instance.new("TextLabel", keyFrame)
-title.Size = UDim2.new(1, -20, 0, 28)
-title.Position = UDim2.new(0,10,0,8)
-title.BackgroundTransparency = 1
-title.Text = "Nhập Key"
-title.TextScaled = true
-title.TextColor3 = Color3.new(1,1,1)
+local lbl = Instance.new("TextLabel", keyFrame)
+lbl.Size = UDim2.new(1, -20, 0, 28)
+lbl.Position = UDim2.new(0,10,0,8)
+lbl.BackgroundTransparency = 1
+lbl.Text = "Nhập Key"
+lbl.TextScaled = true
+lbl.TextColor3 = Color3.fromRGB(255,255,255)
 
-local keyBox = Instance.new("TextBox", keyFrame)
-keyBox.Size = UDim2.new(0, 260, 0, 36)
-keyBox.Position = UDim2.new(0.5, -130, 0, 48)
-keyBox.PlaceholderText = "Nhập key..."
-keyBox.ClearTextOnFocus = false
+local keyInput = Instance.new("TextBox", keyFrame)
+keyInput.Size = UDim2.new(0,260,0,36)
+keyInput.Position = UDim2.new(0.5,-130,0,48)
+keyInput.PlaceholderText = "Nhập key..."
+keyInput.ClearTextOnFocus = false
 
 local keyBtn = Instance.new("TextButton", keyFrame)
-keyBtn.Size = UDim2.new(0, 120, 0, 36)
-keyBtn.Position = UDim2.new(0.5, -60, 0, 100)
+keyBtn.Size = UDim2.new(0,120,0,36)
+keyBtn.Position = UDim2.new(0.5,-60,0,100)
 keyBtn.Text = "Xác nhận"
 keyBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 keyBtn.BorderSizePixel = 0
 
-local keyToggleBtn = Instance.new("TextButton", ScreenGui)
-keyToggleBtn.Size = UDim2.new(0, 110, 0, 36)
-keyToggleBtn.Position = UDim2.new(0, 10, 0, 10)
+local keyToggleBtn = Instance.new("TextButton", KeyGui)
+keyToggleBtn.Size = UDim2.new(0,110,0,36)
+keyToggleBtn.Position = UDim2.new(0,10,0,10)
 keyToggleBtn.Text = "Key Menu"
 keyToggleBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 keyToggleBtn.BorderSizePixel = 0
 keyToggleBtn.MouseButton1Click:Connect(function() keyFrame.Visible = not keyFrame.Visible end)
 
--- Main UI will be created only after key validated
+-- ---------------- Main UI creation (only after valid key) ----------------
 local MainGUI = nil
-
--- Function to build the full Main UI and wire everything (called once after key success)
 local function createMainUI()
     if MainGUI then return end
 
-    -- create a new ScreenGui (separate from key UI)
+    -- initialize runtime from settings
+    infJumpEnabled = settings.infJump
+    noclipEnabled = settings.noclip
+    wsEnabled = settings.walkspeedEnabled
+    walkspeedValue = settings.walkspeedValue or 16
+    hbAllEnabled = settings.hitboxAll
+    hbEnemyEnabled = settings.hitboxEnemy
+    hbSizeValue = settings.hitboxSize or 5
+    espAllEnabled = settings.espAll
+    espEnemyEnabled = settings.espEnemy
+    playerListVisible = settings.playerListVisible
+
     MainGUI = Instance.new("ScreenGui")
     MainGUI.Name = "CustomMenu_Main"
     MainGUI.ResetOnSpawn = false
     MainGUI.Parent = player:WaitForChild("PlayerGui")
 
-    -- Main toggle (top-right)
-    local mainToggleBtn = Instance.new("TextButton", MainGUI)
-    mainToggleBtn.Size = UDim2.new(0, 110, 0, 36)
-    mainToggleBtn.Position = UDim2.new(1, -130, 0, 10)
-    mainToggleBtn.Text = "Main"
-    mainToggleBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-    mainToggleBtn.BorderSizePixel = 0
+    local mainToggle = Instance.new("TextButton", MainGUI)
+    mainToggle.Size = UDim2.new(0,110,0,36)
+    mainToggle.Position = UDim2.new(1,-130,0,10)
+    mainToggle.Text = "Main"
+    mainToggle.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    mainToggle.BorderSizePixel = 0
 
-    -- Main Frame
     local mainFrame = Instance.new("Frame", MainGUI)
-    mainFrame.Size = UDim2.new(0, 520, 0, 420)
-    mainFrame.Position = UDim2.new(0.5, -260, 0.5, -210)
+    mainFrame.Size = UDim2.new(0,520,0,420)
+    mainFrame.Position = UDim2.new(0.5,-260,0.5,-210)
     mainFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
     mainFrame.BorderSizePixel = 0
     mainFrame.Visible = true
 
-    mainToggleBtn.MouseButton1Click:Connect(function() mainFrame.Visible = not mainFrame.Visible end)
+    mainToggle.MouseButton1Click:Connect(function() mainFrame.Visible = not mainFrame.Visible end)
 
-    -- Tab bar + pages
+    -- tabs
     local tabBar = Instance.new("Frame", mainFrame)
-    tabBar.Size = UDim2.new(1, 0, 0, 44)
-    tabBar.Position = UDim2.new(0, 0, 0, 0)
+    tabBar.Size = UDim2.new(1,0,0,44)
+    tabBar.Position = UDim2.new(0,0,0,0)
     tabBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
+
     local pages = {}
     local function makeTab(name, idx)
         local btn = Instance.new("TextButton", tabBar)
-        btn.Size = UDim2.new(0, 170, 1, 0)
-        btn.Position = UDim2.new(0, (idx-1)*170, 0, 0)
+        btn.Size = UDim2.new(0,170,1,0)
+        btn.Position = UDim2.new(0,(idx-1)*170,0,0)
         btn.Text = name
         btn.BackgroundColor3 = Color3.fromRGB(55,55,55)
         btn.BorderSizePixel = 0
 
         local page = Instance.new("Frame", mainFrame)
-        page.Size = UDim2.new(1, 0, 1, -44)
-        page.Position = UDim2.new(0, 0, 0, 44)
+        page.Size = UDim2.new(1,0,1,-44)
+        page.Position = UDim2.new(0,0,0,44)
         page.BackgroundColor3 = Color3.fromRGB(60,60,60)
         page.Visible = false
 
@@ -263,32 +260,32 @@ local function createMainUI()
     local espPage = makeTab("ESP",2)
     local scriptPage = makeTab("Script",3)
 
-    -- Utility to make button
-    local function mkBtn(parent, text, y)
+    -- helper mkBtn
+    local function mkBtn(parent, txt, y)
         local b = Instance.new("TextButton", parent)
-        b.Size = UDim2.new(0, 220, 0, 36)
-        b.Position = UDim2.new(0, 12, 0, y)
-        b.Text = text
+        b.Size = UDim2.new(0,220,0,36)
+        b.Position = UDim2.new(0,12,0,y)
+        b.Text = txt
         b.BackgroundColor3 = Color3.fromRGB(70,70,70)
         b.BorderSizePixel = 0
         return b
     end
 
-    -- ---------------- Player tab UI & logic ----------------
+    -- ===== Player tab =====
     local infBtn = mkBtn(playerPage, "InfJump: OFF", 8)
     local noclipBtn = mkBtn(playerPage, "NoClip: OFF", 56)
     local wsBtn = mkBtn(playerPage, "WalkSpeed: OFF", 104)
 
     local wsInput = Instance.new("TextBox", playerPage)
-    wsInput.Size = UDim2.new(0, 220, 0, 30)
-    wsInput.Position = UDim2.new(0, 12, 0, 152)
+    wsInput.Size = UDim2.new(0,220,0,30)
+    wsInput.Position = UDim2.new(0,12,0,152)
     wsInput.PlaceholderText = "Nhập tốc độ..."
     wsInput.Text = tostring(walkspeedValue)
 
     local playerListBtn = mkBtn(playerPage, "Bảng Player: OFF", 200)
     local playerListFrame = Instance.new("Frame", playerPage)
-    playerListFrame.Size = UDim2.new(0, 260, 0, 320)
-    playerListFrame.Position = UDim2.new(0, 240, 0, 8)
+    playerListFrame.Size = UDim2.new(0,260,0,320)
+    playerListFrame.Position = UDim2.new(0,240,0,8)
     playerListFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
     playerListFrame.BorderSizePixel = 0
     playerListFrame.Visible = playerListVisible
@@ -297,19 +294,17 @@ local function createMainUI()
     playerListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     playerListLayout.Padding = UDim.new(0,6)
 
-    -- bind playertab events (toggle & save)
+    -- toggle handlers
     infBtn.MouseButton1Click:Connect(function()
         infJumpEnabled = not infJumpEnabled
         infBtn.Text = infJumpEnabled and "InfJump: ON" or "InfJump: OFF"
         setAndSave("infJump", infJumpEnabled)
     end)
-
     noclipBtn.MouseButton1Click:Connect(function()
         noclipEnabled = not noclipEnabled
         noclipBtn.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
         setAndSave("noclip", noclipEnabled)
     end)
-
     wsBtn.MouseButton1Click:Connect(function()
         wsEnabled = not wsEnabled
         wsBtn.Text = wsEnabled and "WalkSpeed: ON" or "WalkSpeed: OFF"
@@ -317,19 +312,11 @@ local function createMainUI()
         setAndSave("walkspeedEnabled", wsEnabled)
         setAndSave("walkspeedValue", walkspeedValue)
     end)
-
-    wsInput.FocusLost:Connect(function(enter)
+    wsInput.FocusLost:Connect(function()
         local v = tonumber(wsInput.Text)
-        if v then
-            walkspeedValue = v
-            setAndSave("walkspeedValue", walkspeedValue)
-            if wsEnabled and player.Character then
-                local h = player.Character:FindFirstChildOfClass("Humanoid")
-                if h then pcall(function() h.WalkSpeed = walkspeedValue end) end
-            end
-        else
-            wsInput.Text = tostring(walkspeedValue)
-        end
+        if v then walkspeedValue = v setAndSave("walkspeedValue", walkspeedValue)
+            if wsEnabled and player.Character then local h=player.Character:FindFirstChildOfClass("Humanoid"); if h then pcall(function() h.WalkSpeed = walkspeedValue end) end end
+        else wsInput.Text = tostring(walkspeedValue) end
     end)
 
     playerListBtn.MouseButton1Click:Connect(function()
@@ -339,14 +326,12 @@ local function createMainUI()
     end)
 
     local function clearPlayerList()
-        for _,c in pairs(playerListFrame:GetChildren()) do
-            if c:IsA("TextButton") then c:Destroy() end
-        end
+        for _,c in pairs(playerListFrame:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
     end
     local function createPlayerButton(target)
         if not target or target == player then return end
         local btn = Instance.new("TextButton", playerListFrame)
-        btn.Size = UDim2.new(1, -12, 0, 28)
+        btn.Size = UDim2.new(1,-12,0,28)
         btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
         btn.BorderSizePixel = 0
         btn.Text = target.Name
@@ -355,175 +340,120 @@ local function createMainUI()
             if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
             if target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
                 pcall(function()
-                    player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+                    player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0)
                 end)
             end
         end)
         return btn
     end
-    local function updatePlayerList()
-        clearPlayerList()
-        for _,pl in pairs(Players:GetPlayers()) do
-            if pl ~= player then createPlayerButton(pl) end
-        end
-    end
+    local function updatePlayerList() clearPlayerList(); for _,pl in pairs(Players:GetPlayers()) do if pl~=player then createPlayerButton(pl) end end end
 
-    -- update live while visible
-    RunService.RenderStepped:Connect(function()
-        if playerListFrame and playerListFrame.Visible then
-            pcall(updatePlayerList)
-        end
-    end)
-    Players.PlayerAdded:Connect(function(pl)
-        if playerListFrame.Visible then task.wait(0.2); pcall(updatePlayerList) end
-        pl.CharacterAdded:Connect(function() task.wait(0.4); if playerListFrame.Visible then pcall(updatePlayerList) end end)
-    end)
-    Players.PlayerRemoving:Connect(function(pl) if playerListFrame.Visible then task.wait(0.1); pcall(updatePlayerList) end end)
+    RunService.RenderStepped:Connect(function() if playerListFrame and playerListFrame.Visible then pcall(updatePlayerList) end end)
+    Players.PlayerAdded:Connect(function(pl) pl.CharacterAdded:Connect(function() task.wait(0.4); if playerListFrame.Visible then pcall(updatePlayerList) end end); if playerListFrame.Visible then task.wait(0.2); pcall(updatePlayerList) end end)
+    Players.PlayerRemoving:Connect(function() if playerListFrame.Visible then task.wait(0.1); pcall(updatePlayerList) end end)
 
-    -- ---------------- ESP tab UI & logic ----------------
+    -- ===== ESP tab =====
     local hbSizeInput = Instance.new("TextBox", espPage)
-    hbSizeInput.Size = UDim2.new(0, 140, 0, 36)
-    hbSizeInput.Position = UDim2.new(0, 12, 0, 8)
+    hbSizeInput.Size = UDim2.new(0,140,0,36)
+    hbSizeInput.Position = UDim2.new(0,12,0,8)
     hbSizeInput.PlaceholderText = "Hitbox size"
     hbSizeInput.Text = tostring(hbSizeValue)
 
     local function mkESPBtn(text,y,cb)
         local b = Instance.new("TextButton", espPage)
-        b.Size = UDim2.new(0, 220, 0, 36)
-        b.Position = UDim2.new(0, 12, 0, y)
+        b.Size = UDim2.new(0,220,0,36)
+        b.Position = UDim2.new(0,12,0,y)
         b.Text = text .. ": OFF"
         b.BackgroundColor3 = Color3.fromRGB(70,70,70)
         b.BorderSizePixel = 0
         local state = false
-        b.MouseButton1Click:Connect(function()
-            state = not state
-            b.Text = text .. ": " .. (state and "ON" or "OFF")
-            cb(state)
-        end)
+        b.MouseButton1Click:Connect(function() state = not state; b.Text = text .. ": " .. (state and "ON" or "OFF"); cb(state) end)
         return b
     end
 
-    local hbAllBtn = mkESPBtn("Hitbox All", 60, function(s) hbAllEnabled = s setAndSave("hitboxAll", s) end)
-    local hbEnemyBtn = mkESPBtn("Hitbox Enemy", 110, function(s) hbEnemyEnabled = s setAndSave("hitboxEnemy", s) end)
-    local espAllBtn = mkESPBtn("ESP All", 160, function(s) espAllEnabled = s setAndSave("espAll", s) end)
-    local espEnemyBtn = mkESPBtn("ESP Enemy", 210, function(s) espEnemyEnabled = s setAndSave("espEnemy", s) end)
+    local hbAllBtn = mkESPBtn("Hitbox All",60,function(s) hbAllEnabled = s setAndSave("hitboxAll", s) end)
+    local hbEnemyBtn = mkESPBtn("Hitbox Enemy",110,function(s) hbEnemyEnabled = s setAndSave("hitboxEnemy", s) end)
+    local espAllBtn = mkESPBtn("ESP All",160,function(s) espAllEnabled = s setAndSave("espAll", s) end)
+    local espEnemyBtn = mkESPBtn("ESP Enemy",210,function(s) espEnemyEnabled = s setAndSave("espEnemy", s) end)
 
-    hbSizeInput.FocusLost:Connect(function()
-        local v = tonumber(hbSizeInput.Text)
-        if v then hbSizeValue = v setAndSave("hitboxSize", hbSizeValue) else hbSizeInput.Text = tostring(hbSizeValue) end
-    end)
+    hbSizeInput.FocusLost:Connect(function() local v = tonumber(hbSizeInput.Text) if v then hbSizeValue = v setAndSave("hitboxSize", hbSizeValue) else hbSizeInput.Text = tostring(hbSizeValue) end end)
 
-    -- Keep track when players join/leave
     Players.PlayerRemoving:Connect(function(pl) if originalProps[pl.UserId] then originalProps[pl.UserId] = nil end end)
-    Players.PlayerAdded:Connect(function(pl)
-        pl.CharacterAdded:Connect(function()
-            task.wait(0.6)
-            if hbAllEnabled then applyHitboxTo(pl, hbSizeValue) end
-            if hbEnemyEnabled and isEnemy(pl) then applyHitboxTo(pl, hbSizeValue) end
-            if espAllEnabled then addHighlightTo(pl, Color3.fromRGB(0,255,0)) end
-            if espEnemyEnabled and isEnemy(pl) then addHighlightTo(pl, Color3.fromRGB(255,0,0)) end
-        end)
-    end)
+    Players.PlayerAdded:Connect(function(pl) pl.CharacterAdded:Connect(function() task.wait(0.6); if hbAllEnabled then applyHitbox(pl, hbSizeValue) end if hbEnemyEnabled and isEnemy(pl) then applyHitbox(pl, hbSizeValue) end if espAllEnabled then addHighlight(pl, Color3.fromRGB(0,255,0)) end if espEnemyEnabled and isEnemy(pl) then addHighlight(pl, Color3.fromRGB(255,0,0)) end end) end)
 
-    -- Updater loop for Hitbox & ESP (runs after main created)
     task.spawn(function()
-        while true do
+        while MainGUI and MainGUI.Parent do
             local size = tonumber(hbSizeInput.Text) or hbSizeValue
             for _,pl in ipairs(Players:GetPlayers()) do
-                if pl ~= player then
-                    if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
-                        -- Hitbox
-                        if hbAllEnabled then applyHitboxTo(pl, size)
-                        elseif hbEnemyEnabled and isEnemy(pl) then applyHitboxTo(pl, size)
-                        else resetHitboxFor(pl) end
-                        -- ESP
-                        if espAllEnabled then addHighlightTo(pl, Color3.fromRGB(0,255,0))
-                        elseif espEnemyEnabled and isEnemy(pl) then addHighlightTo(pl, Color3.fromRGB(255,0,0))
-                        else removeHighlightFrom(pl) end
-                    end
+                if pl~=player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
+                    if hbAllEnabled then applyHitbox(pl, size)
+                    elseif hbEnemyEnabled and isEnemy(pl) then applyHitbox(pl, size)
+                    else resetHitbox(pl) end
+
+                    if espAllEnabled then addHighlight(pl, Color3.fromRGB(0,255,0))
+                    elseif espEnemyEnabled and isEnemy(pl) then addHighlight(pl, Color3.fromRGB(255,0,0))
+                    else removeHighlight(pl) end
                 end
             end
             task.wait(0.25)
         end
     end)
 
-    -- ---------------- Script tab ----------------
-    local function mkScriptBtn(parent, text, y, cb)
-        local b = Instance.new("TextButton", parent)
-        b.Size = UDim2.new(0, 240, 0, 36)
-        b.Position = UDim2.new(0, 12, 0, y)
-        b.Text = text
-        b.BackgroundColor3 = Color3.fromRGB(70,70,70)
-        b.BorderSizePixel = 0
-        b.MouseButton1Click:Connect(function() pcall(cb) end)
-        return b
-    end
+    -- ===== Script tab =====
+    local function mkScriptBtn(parent, text, y, fn) local b = Instance.new("TextButton", parent) b.Size = UDim2.new(0,240,0,36) b.Position = UDim2.new(0,12,0,y) b.Text = text b.BackgroundColor3 = Color3.fromRGB(70,70,70) b.BorderSizePixel = 0 b.MouseButton1Click:Connect(function() pcall(fn) end) return b end
+    mkScriptBtn(scriptPage, "Load FlyGuiV3", 10, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))() end)
+    mkScriptBtn(scriptPage, "DatTh Script", 60, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/DatThg/refs/heads/main/DatThgV2"))() end)
+    mkScriptBtn(scriptPage, "Mở Menu TP", 110, function() loadstring(game:HttpGet("https://raw.githubusercontent.com/doanhvu339-ux/Fly/refs/heads/main/scripttp"))() end)
 
-    mkScriptBtn(scriptPage, "Load FlyGuiV3", 10, function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
-    end)
-    mkScriptBtn(scriptPage, "DatTh Script", 60, function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/DatThg/refs/heads/main/DatThgV2"))()
-    end)
-    mkScriptBtn(scriptPage, "Mở Menu TP", 110, function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/doanhvu339-ux/Fly/refs/heads/main/scripttp"))()
+    -- ===== InfJump listener (only active after main created) =====
+    UIS.JumpRequest:Connect(function()
+        if infJumpEnabled and player.Character then
+            local h = player.Character:FindFirstChildOfClass("Humanoid")
+            if h then pcall(function() h:ChangeState(Enum.HumanoidStateType.Jumping) end) end
+        end
     end)
 
-    -- ---------------- Apply settings to UI (initial) ----------------
-    do
-        -- player
-        infJumpEnabled = settings.infJump
-        infBtn.Text = infJumpEnabled and "InfJump: ON" or "InfJump: OFF"
-        noclipEnabled = settings.noclip
-        noclipBtn.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
-        walkspeedValue = settings.walkspeedValue or walkspeedValue
-        wsInput.Text = tostring(walkspeedValue)
-        wsEnabled = settings.walkspeedEnabled
-        wsBtn.Text = wsEnabled and "WalkSpeed: ON" or "WalkSpeed: OFF"
-        playerListVisible = settings.playerListVisible
-        playerListFrame.Visible = playerListVisible
-        playerListBtn.Text = "Bảng Player: " .. (playerListFrame.Visible and "ON" or "OFF")
-        -- esp
-        hbSizeValue = settings.hitboxSize or hbSizeValue
-        hbSizeInput.Text = tostring(hbSizeValue)
-        hbAllEnabled = settings.hitboxAll
-        hbEnemyEnabled = settings.hitboxEnemy
-        espAllEnabled = settings.espAll
-        espEnemyEnabled = settings.espEnemy
-        hbAllBtn.Text = "Hitbox All: " .. (hbAllEnabled and "ON" or "OFF")
-        hbEnemyBtn.Text = "Hitbox Enemy: " .. (hbEnemyEnabled and "ON" or "OFF")
-        espAllBtn.Text = "ESP All: " .. (espAllEnabled and "ON" or "OFF")
-        espEnemyBtn.Text = "ESP Enemy: " .. (espEnemyEnabled and "ON" or "OFF")
-    end
-
-    -- NoClip & WalkSpeed updater (only active after main created)
+    -- ===== NoClip & WalkSpeed updater (only active after main created) =====
     RunService.Stepped:Connect(function()
         if noclipEnabled and player.Character then
-            for _,part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then pcall(function() part.CanCollide = false end) end
-            end
+            for _,part in pairs(player.Character:GetDescendants()) do if part:IsA("BasePart") then pcall(function() part.CanCollide = false end) end end
         end
         if wsEnabled and player.Character then
             local h = player.Character:FindFirstChildOfClass("Humanoid")
             if h then pcall(function() h.WalkSpeed = tonumber(wsInput.Text) or walkspeedValue end) end
         end
     end)
+
+    -- Apply settings visually
+    do
+        infBtn.Text = (infJumpEnabled and "InfJump: ON" or "InfJump: OFF")
+        noclipBtn.Text = (noclipEnabled and "NoClip: ON" or "NoClip: OFF")
+        wsInput.Text = tostring(walkspeedValue)
+        wsBtn.Text = (wsEnabled and "WalkSpeed: ON" or "WalkSpeed: OFF")
+        playerListFrame.Visible = playerListVisible
+        playerListBtn.Text = "Bảng Player: " .. (playerListFrame.Visible and "ON" or "OFF")
+        hbSizeInput.Text = tostring(hbSizeValue)
+        hbAllBtn.Text = "Hitbox All: " .. (hbAllEnabled and "ON" or "OFF")
+        hbEnemyBtn.Text = "Hitbox Enemy: " .. (hbEnemyEnabled and "ON" or "OFF")
+        espAllBtn.Text = "ESP All: " .. (espAllEnabled and "ON" or "OFF")
+        espEnemyBtn.Text = "ESP Enemy: " .. (espEnemyEnabled and "ON" or "OFF")
+    end
+
+    -- show player tab by default
+    for _,v in pairs(pages) do v.Visible = false end
+    pages["Player"].Visible = true
 end
 
--- ---------------- key button: validate -> create main UI & apply saved state ----------------
+-- ---------------- Key validation -> create main UI ----------------
 keyBtn.MouseButton1Click:Connect(function()
-    local txt = tostring(keyBox.Text or "")
-    if VALID_KEYS[txt] then
-        -- destroy key-related UI (and keyToggle)
+    local k = tostring(keyInput.Text or "")
+    if VALID_KEYS[k] then
         pcall(function() keyFrame:Destroy() end)
         pcall(function() keyToggleBtn:Destroy() end)
-        -- create main UI and start features; Main UI will read 'settings' already loaded earlier
         createMainUI()
-        -- apply saved states already done inside createMainUI
     else
-        keyBox.Text = "Sai key!"
+        keyInput.Text = "Sai key!"
     end
 end)
 
--- final print
-print("[CustomMenu] Key UI ready. Enter valid key to enable menu. Settings persisted to: " .. SETTINGS_FILE)
+print("[CustomMenu] Ready. Enter a valid key ('abcd','abcdf','bpremium') to enable menu. Settings saved to '"..SETTINGS_FILE.."' if supported.")
