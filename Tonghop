@@ -10,7 +10,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- Config
-local VALID_KEYS = { abcd = true, abcdf = true, bpremium = true }
+local VALID_KEYS = { 1 = true, 09 = true, bpremium = true }
 local SETTINGS_FILE = "custom_menu_settings_v2.json"
 
 -- Default settings
