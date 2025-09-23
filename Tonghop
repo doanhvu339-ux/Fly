@@ -1,5 +1,5 @@
 --// Key System
-local validKeys = {"abcd","abcdf","bpremium"}
+local validKeys = {"1","09","bpremium"}
 local keySavedFile = "my_saved_key.txt"
 
 local player = game.Players.LocalPlayer
