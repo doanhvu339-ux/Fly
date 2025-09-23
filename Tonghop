@@ -179,7 +179,6 @@ local function createMainUI()
         clearContent()
         local y=10
 
-        -- Ô nhập Hitbox Size
         local hbBox = Instance.new("TextBox", content)
         hbBox.Size = UDim2.new(1,-20,0,30)
         hbBox.Position = UDim2.new(0,10,0,y)
@@ -194,7 +193,6 @@ local function createMainUI()
         end)
         y=y+40
 
-        -- Nút Hitbox All
         local hitAll = Instance.new("TextButton", content)
         hitAll.Size=UDim2.new(1,-20,0,30)
         hitAll.Position=UDim2.new(0,10,0,y)
@@ -206,7 +204,6 @@ local function createMainUI()
         end)
         y=y+40
 
-        -- Nút Hitbox Enemy
         local hitEnemy = Instance.new("TextButton", content)
         hitEnemy.Size=UDim2.new(1,-20,0,30)
         hitEnemy.Position=UDim2.new(0,10,0,y)
@@ -218,7 +215,6 @@ local function createMainUI()
         end)
         y=y+40
 
-        -- Nút ESP All
         local espAll = Instance.new("TextButton", content)
         espAll.Size=UDim2.new(1,-20,0,30)
         espAll.Position=UDim2.new(0,10,0,y)
@@ -230,7 +226,6 @@ local function createMainUI()
         end)
         y=y+40
 
-        -- Nút ESP Enemy
         local espEnemy = Instance.new("TextButton", content)
         espEnemy.Size=UDim2.new(1,-20,0,30)
         espEnemy.Position=UDim2.new(0,10,0,y)
@@ -246,6 +241,7 @@ local function createMainUI()
     local function scriptTab()
         clearContent()
         local y=10
+
         local fly=Instance.new("TextButton",content)
         fly.Size=UDim2.new(1,-20,0,30)
         fly.Position=UDim2.new(0,10,0,y)
@@ -254,6 +250,7 @@ local function createMainUI()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
         end)
         y=y+40
+
         local dat=Instance.new("TextButton",content)
         dat.Size=UDim2.new(1,-20,0,30)
         dat.Position=UDim2.new(0,10,0,y)
@@ -262,6 +259,7 @@ local function createMainUI()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/DatThg/refs/heads/main/DatThgV2"))()
         end)
         y=y+40
+
         local tp=Instance.new("TextButton",content)
         tp.Size=UDim2.new(1,-20,0,30)
         tp.Position=UDim2.new(0,10,0,y)
@@ -269,21 +267,30 @@ local function createMainUI()
         tp.MouseButton1Click:Connect(function()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/doanhvu339-ux/Fly/refs/heads/main/scripttp"))()
         end)
+        y=y+40
+
+        local floatBtn = Instance.new("TextButton",content)
+        floatBtn.Size = UDim2.new(1,-20,0,30)
+        floatBtn.Position = UDim2.new(0,10,0,y)
+        floatBtn.Text = "Float"
+        floatBtn.MouseButton1Click:Connect(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/doanhvu339-ux/Fly/refs/heads/main/Float"))()
+        end)
     end
 
     -- Tabs
     local function makeTab(name,func,xPos)
         local b=Instance.new("TextButton",tabBtns)
-        b.Size=UDim2.new(0.33,0,1,0)
+        b.Size=UDim2.new(0.25,0,1,0)
         b.Position=UDim2.new(xPos,0,0,0)
         b.Text=name
         b.MouseButton1Click:Connect(func)
     end
     makeTab("Player",playerTab,0)
-    makeTab("ESP",espTab,0.33)
-    makeTab("Script",scriptTab,0.66)
+    makeTab("ESP",espTab,0.25)
+    makeTab("Script",scriptTab,0.5)
 
-    -- InfJump Listener
+    -- InfJump
     UIS.JumpRequest:Connect(function()
         if settings.infJump and player.Character then
             local h=player.Character:FindFirstChildOfClass("Humanoid")
@@ -291,7 +298,7 @@ local function createMainUI()
         end
     end)
 
-    -- NoClip Loop
+    -- NoClip
     game:GetService("RunService").Stepped:Connect(function()
         if settings.noclip and player.Character then
             for _,part in ipairs(player.Character:GetDescendants()) do
@@ -302,14 +309,14 @@ local function createMainUI()
         end
     end)
 
-    -- WalkSpeed Loop
+    -- WalkSpeed
     game:GetService("RunService").Heartbeat:Connect(function()
         if settings.walkspeed and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
             player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed=settings.walkspeedValue
         end
     end)
 
-    -- ESP & Hitbox Update
+    -- ESP & Hitbox
     game:GetService("RunService").Heartbeat:Connect(function()
         for _,p in ipairs(game.Players:GetPlayers()) do
             if p.Character and p~=player then
@@ -337,7 +344,7 @@ local function createMainUI()
     end)
 end
 
---// Key System
+--// Key
 keyBtn.MouseButton1Click:Connect(function()
     local k=keyBox.Text
     for _,v in ipairs(validKeys) do
