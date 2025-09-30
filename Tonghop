@@ -1,6 +1,4 @@
--- Script full - All features (Vietnamese, no key system)
--- Paste into executor or LocalScript. Requires writefile/readfile for persistent save (fallback to getgenv).
-
+--// Custom Menu with Tab System (Vietnamese, no key)
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,7 +8,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- Settings file
-local SETTINGS_FILE = "custom_menu_settings_final_v2.json"
+local SETTINGS_FILE = "custom_menu_settings_final_tab.json"
 
 -- Default settings
 local defaultSettings = {
@@ -79,7 +77,6 @@ end
 
 -- Keep original HRP props to restore
 local originalHRP = {}
-
 local function saveOriginal(plr)
     if not plr or not plr.Character then return end
     local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
@@ -152,14 +149,211 @@ local function removeHighlight(plr)
     if hl then pcall(function() hl:Destroy() end) end
 end
 
--- ================= Create Main GUI directly =================
+-- ================= Create Main GUI with Tabs =================
 local MainGui = nil
 local function createMainGui()
     if MainGui then return end
-    -- (giữ nguyên toàn bộ phần MainGui từ script cũ, không đổi gì)
+    MainGui = Instance.new("ScreenGui")
+    MainGui.Name = "CustomMenu"
+    MainGui.Parent = playerGui
+    MainGui.ResetOnSpawn = false
+
+    -- Main frame
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(0, 280, 0, 420)
+    Frame.Position = UDim2.new(0, 100, 0.5, -210)
+    Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Frame.BorderSizePixel = 0
+    Frame.Active = true
+    Frame.Draggable = true
+    Frame.Parent = MainGui
+
+    -- Toggle button (📂 Menu)
+    local ToggleBtn = Instance.new("TextButton")
+    ToggleBtn.Size = UDim2.new(0, 80, 0, 30)
+    ToggleBtn.Position = UDim2.new(0, 10, 0, 10)
+    ToggleBtn.Text = "📂 Menu"
+    ToggleBtn.TextColor3 = Color3.new(1,1,1)
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    ToggleBtn.Font = Enum.Font.SourceSansBold
+    ToggleBtn.TextSize = 18
+    ToggleBtn.Parent = MainGui
+
+    local menuVisible = true
+    ToggleBtn.MouseButton1Click:Connect(function()
+        menuVisible = not menuVisible
+        Frame.Visible = menuVisible
+    end)
+
+    -- Tab bar
+    local TabBar = Instance.new("Frame")
+    TabBar.Size = UDim2.new(1,0,0,30)
+    TabBar.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    TabBar.Parent = Frame
+
+    local UtilityTab = Instance.new("TextButton")
+    UtilityTab.Size = UDim2.new(0.5,0,1,0)
+    UtilityTab.Position = UDim2.new(0,0,0,0)
+    UtilityTab.Text = "⚙️ Utility"
+    UtilityTab.TextColor3 = Color3.new(1,1,1)
+    UtilityTab.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    UtilityTab.Font = Enum.Font.SourceSansBold
+    UtilityTab.TextSize = 18
+    UtilityTab.Parent = TabBar
+
+    local FlyTab = Instance.new("TextButton")
+    FlyTab.Size = UDim2.new(0.5,0,1,0)
+    FlyTab.Position = UDim2.new(0.5,0,0,0)
+    FlyTab.Text = "🚀 Fly"
+    FlyTab.TextColor3 = Color3.new(1,1,1)
+    FlyTab.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    FlyTab.Font = Enum.Font.SourceSansBold
+    FlyTab.TextSize = 18
+    FlyTab.Parent = TabBar
+
+    -- Container frames
+    local UtilityFrame = Instance.new("Frame")
+    UtilityFrame.Size = UDim2.new(1,0,1,-30)
+    UtilityFrame.Position = UDim2.new(0,0,0,30)
+    UtilityFrame.BackgroundTransparency = 1
+    UtilityFrame.Parent = Frame
+
+    local FlyFrame = Instance.new("Frame")
+    FlyFrame.Size = UDim2.new(1,0,1,-30)
+    FlyFrame.Position = UDim2.new(0,0,0,30)
+    FlyFrame.BackgroundTransparency = 1
+    FlyFrame.Visible = false
+    FlyFrame.Parent = Frame
+
+    -- Layout for Utility tab
+    local Layout = Instance.new("UIListLayout")
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.Padding = UDim.new(0, 5)
+    Layout.Parent = UtilityFrame
+
+    -- Toggle creator
+    local function makeToggle(text, settingKey)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, -10, 0, 30)
+        btn.Position = UDim2.new(0,5,0,0)
+        btn.Text = (settings[settingKey] and "✅ " or "❌ ") .. text
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 18
+        btn.Parent = UtilityFrame
+
+        btn.MouseButton1Click:Connect(function()
+            setAndSave(settingKey, not settings[settingKey])
+            btn.Text = (settings[settingKey] and "✅ " or "❌ ") .. text
+        end)
+    end
+
+    makeToggle("Infinite Jump", "infJump")
+    makeToggle("Noclip", "noclip")
+    makeToggle("Walkspeed (Enable)", "walkspeedEnabled")
+    makeToggle("Hitbox All", "hitboxAll")
+    makeToggle("Hitbox Enemy", "hitboxEnemy")
+    makeToggle("ESP All", "espAll")
+    makeToggle("ESP Enemy", "espEnemy")
+    makeToggle("Hiện Player List", "playerListVisible")
+
+    -- Walkspeed label + input
+    local WalkLabel = Instance.new("TextLabel")
+    WalkLabel.Size = UDim2.new(1, -10, 0, 25)
+    WalkLabel.BackgroundTransparency = 1
+    WalkLabel.Text = "Tốc độ:"
+    WalkLabel.TextColor3 = Color3.new(1,1,1)
+    WalkLabel.Font = Enum.Font.SourceSans
+    WalkLabel.TextSize = 18
+    WalkLabel.Parent = UtilityFrame
+
+    local WalkBox = Instance.new("TextBox")
+    WalkBox.Size = UDim2.new(1, -10, 0, 25)
+    WalkBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    WalkBox.TextColor3 = Color3.new(1,1,1)
+    WalkBox.Text = tostring(settings.walkspeedValue)
+    WalkBox.PlaceholderText = "Nhập tốc độ (16 - 100)"
+    WalkBox.Font = Enum.Font.SourceSansBold
+    WalkBox.TextSize = 18
+    WalkBox.ClearTextOnFocus = false
+    WalkBox.Parent = UtilityFrame
+    WalkBox.FocusLost:Connect(function()
+        local val = tonumber(WalkBox.Text)
+        if val then
+            val = math.clamp(val, 16, 100)
+            setAndSave("walkspeedValue", val)
+            WalkBox.Text = tostring(val)
+        else
+            WalkBox.Text = tostring(settings.walkspeedValue)
+        end
+    end)
+
+    -- Hitbox size input
+    local HitLabel = Instance.new("TextLabel")
+    HitLabel.Size = UDim2.new(1, -10, 0, 25)
+    HitLabel.BackgroundTransparency = 1
+    HitLabel.Text = "Hitbox Size:"
+    HitLabel.TextColor3 = Color3.new(1,1,1)
+    HitLabel.Font = Enum.Font.SourceSans
+    HitLabel.TextSize = 18
+    HitLabel.Parent = UtilityFrame
+
+    local HitBox = Instance.new("TextBox")
+    HitBox.Size = UDim2.new(1, -10, 0, 25)
+    HitBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    HitBox.TextColor3 = Color3.new(1,1,1)
+    HitBox.Text = tostring(settings.hitboxSize)
+    HitBox.PlaceholderText = "Nhập size (2 - 20)"
+    HitBox.Font = Enum.Font.SourceSansBold
+    HitBox.TextSize = 18
+    HitBox.ClearTextOnFocus = false
+    HitBox.Parent = UtilityFrame
+    HitBox.FocusLost:Connect(function()
+        local val = tonumber(HitBox.Text)
+        if val then
+            val = math.clamp(val, 2, 20)
+            setAndSave("hitboxSize", val)
+            HitBox.Text = tostring(val)
+        else
+            HitBox.Text = tostring(settings.hitboxSize)
+        end
+    end)
+
+    -- Fly tab content
+    local FlyBtn = Instance.new("TextButton")
+    FlyBtn.Size = UDim2.new(1, -20, 0, 40)
+    FlyBtn.Position = UDim2.new(0,10,0,30)
+    FlyBtn.Text = "🚀 Load Fly Script"
+    FlyBtn.TextColor3 = Color3.new(1,1,1)
+    FlyBtn.BackgroundColor3 = Color3.fromRGB(70,70,100)
+    FlyBtn.Font = Enum.Font.SourceSansBold
+    FlyBtn.TextSize = 20
+    FlyBtn.Parent = FlyFrame
+    FlyBtn.MouseButton1Click:Connect(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+    end)
+
+    -- Tab switching
+    local function switchTab(tab)
+        if tab == "Utility" then
+            UtilityFrame.Visible = true
+            FlyFrame.Visible = false
+            UtilityTab.BackgroundColor3 = Color3.fromRGB(70,70,70)
+            FlyTab.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        else
+            UtilityFrame.Visible = false
+            FlyFrame.Visible = true
+            FlyTab.BackgroundColor3 = Color3.fromRGB(70,70,70)
+            UtilityTab.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        end
+    end
+    UtilityTab.MouseButton1Click:Connect(function() switchTab("Utility") end)
+    FlyTab.MouseButton1Click:Connect(function() switchTab("Fly") end)
+    switchTab("Utility")
 end
 
--- Gọi MainGui luôn
+-- Gọi MainGui
 createMainGui()
 
 -- Cleanup khi player rời
@@ -168,4 +362,4 @@ Players.PlayerRemoving:Connect(function(pl)
     removeHighlight(pl)
 end)
 
-print("[CustomMenu] Ready. Menu loaded without key system.")
+print("[CustomMenu] Ready. Menu with tabs + toggle loaded.")
